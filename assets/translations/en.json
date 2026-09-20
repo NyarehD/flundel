@@ -1,0 +1,42 @@
+{
+  "app_title": "Flundel Focus",
+  "presets": {
+    "deep_work": "Deep Work",
+    "coding": "Coding",
+    "reading": "Reading",
+    "quiet_focus": "Quiet Focus",
+    "piano_focus": "Piano Focus",
+    "night_focus": "Night Focus"
+  },
+  "durations": {
+    "min15": "15 min",
+    "min25": "25 min",
+    "min45": "45 min",
+    "min60": "60 min",
+    "min90": "90 min",
+    "no_end": "No End"
+  },
+  "actions": {
+    "start": "START SESSION",
+    "stop": "STOP",
+    "pomodoro": "Pomodoro",
+    "customize": "Customize Sound"
+  },
+  "controls": {
+    "intensity": "Intensity",
+    "warmth": "Warmth",
+    "piano": "Piano",
+    "nature": "Nature",
+    "binaural": "Binaural",
+    "complexity": "Complexity",
+    "noise": "Noise",
+    "pad": "Pad"
+  },
+  "session": {
+    "phase_settling": "Settling",
+    "phase_entering": "Entering Focus",
+    "phase_deep": "Deep Focus",
+    "phase_wind_down": "Wind Down",
+    "phase_completion": "Completion"
+  }
+}
