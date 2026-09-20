@@ -1,0 +1,92 @@
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
+import 'package:flundel/audio/dsp/smoothed_value.dart';
+
+/// Independent stereo sine wave generator for binaural focus beats.
+class BinauralGenerator {
+  final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
+  final SmoothedValue carrierHz = SmoothedValue(180.0, smoothingDurationSeconds: 0.5);
+  final SmoothedValue beatHz = SmoothedValue(10.0, smoothingDurationSeconds: 0.5);
+
+  bool isMuted = false;
+  bool isSolo = false;
+
+  void updateParameters({
+    required double level,
+    required double carrierFrequency,
+    required double differenceHz,
+  }) {
+    volume.setTarget(level);
+    carrierHz.setTarget(carrierFrequency);
+    beatHz.setTarget(differenceHz);
+  }
+
+  /// Generates binaural stereo tone WAV URI with crossfaded loop ends.
+  String generateBinauralWavUri({
+    double durationSeconds = 3.0,
+    int sampleRate = 44100,
+  }) {
+    final numSamples = (sampleRate * durationSeconds).toInt();
+    final dataSize = numSamples * 4;
+    final fileSize = 36 + dataSize;
+
+    final bytes = Uint8List(44 + dataSize);
+    final bd = ByteData.sublistView(bytes);
+
+    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+
+    final leftFreq = carrierHz.value;
+    final rightFreq = carrierHz.value + beatHz.value;
+    final fadeSamples = (sampleRate * 0.15).toInt();
+    int offset = 44;
+
+    final curVol = volume.value;
+
+    for (int i = 0; i < numSamples; i++) {
+      final t = i / sampleRate;
+
+      double loopFade = 1.0;
+      if (i < fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * i / fadeSamples));
+      } else if (i > numSamples - fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
+      }
+
+      final gainFactor = 2000.0 * loopFade;
+      final leftVal = (sin(2 * pi * leftFreq * t) * gainFactor).toInt().clamp(-32768, 32767);
+      final rightVal = (sin(2 * pi * rightFreq * t) * gainFactor).toInt().clamp(-32768, 32767);
+
+      bd.setInt16(offset, leftVal, Endian.little);
+      bd.setInt16(offset + 2, rightVal, Endian.little);
+      offset += 4;
+    }
+
+    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+  }
+
+  static void _writeWavHeader(
+    ByteData bd,
+    Uint8List bytes,
+    int fileSize,
+    int dataSize, {
+    required int channels,
+    required int sampleRate,
+  }) {
+    bytes.setRange(0, 4, ascii.encode('RIFF'));
+    bd.setUint32(4, fileSize, Endian.little);
+    bytes.setRange(8, 12, ascii.encode('WAVE'));
+
+    bytes.setRange(12, 16, ascii.encode('fmt '));
+    bd.setUint32(16, 16, Endian.little);
+    bd.setUint16(20, 1, Endian.little);
+    bd.setUint16(22, channels, Endian.little);
+    bd.setUint32(24, sampleRate, Endian.little);
+    bd.setUint32(28, sampleRate * channels * 2, Endian.little);
+    bd.setUint16(32, channels * 2, Endian.little);
+    bd.setUint16(34, 16, Endian.little);
+
+    bytes.setRange(36, 40, ascii.encode('data'));
+    bd.setUint32(40, dataSize, Endian.little);
+  }
+}

@@ -29,7 +29,15 @@ class SessionViewModel extends Notifier<SessionState> {
         final elapsed = now.difference(session.startedAt).inSeconds;
 
         if (session.durationSeconds == null || elapsed < session.durationSeconds!) {
-          _audioEngine.start(session.preset.config);
+          final initialPhase = SessionPhaseX.calculatePhase(
+            elapsedSeconds: elapsed,
+            totalDurationSeconds: session.durationSeconds,
+          );
+          _audioEngine.start(
+            session.preset.config,
+            sessionSeed: session.id.hashCode,
+          );
+          _audioEngine.setFocusDepth(_focusDepthForPhase(initialPhase));
           _startTimer();
 
           return SessionState(
@@ -83,6 +91,9 @@ class SessionViewModel extends Notifier<SessionState> {
   }
 
   Future<void> startSession() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true);
+
     final session = FocusSession(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       startedAt: DateTime.now(),
@@ -91,16 +102,12 @@ class SessionViewModel extends Notifier<SessionState> {
       isPomodoro: state.pomodoroEnabled,
     );
 
-    state = state.copyWith(
-      isActive: true,
-      currentSession: session,
-      elapsedSeconds: 0,
-      remainingSeconds: state.selectedDurationSeconds,
-      phase: SessionPhase.settling,
-    );
-
     await _storage.saveActiveSession(session.toJson());
-    await _audioEngine.start(session.preset.config);
+    await _audioEngine.start(
+      session.preset.config,
+      sessionSeed: session.id.hashCode,
+    );
+    await _audioEngine.setFocusDepth(_focusDepthForPhase(SessionPhase.settling));
 
     try {
       Vibration.hasVibrator().then((hasVibrator) {
@@ -109,6 +116,15 @@ class SessionViewModel extends Notifier<SessionState> {
         }
       }).catchError((_) {});
     } catch (_) {}
+
+    state = state.copyWith(
+      isActive: true,
+      isLoading: false,
+      currentSession: session,
+      elapsedSeconds: 0,
+      remainingSeconds: state.selectedDurationSeconds,
+      phase: SessionPhase.settling,
+    );
 
     _startTimer();
   }
@@ -138,6 +154,10 @@ class SessionViewModel extends Notifier<SessionState> {
         totalDurationSeconds: totalDuration,
       );
 
+      if (newPhase != state.phase) {
+        _audioEngine.setFocusDepth(_focusDepthForPhase(newPhase));
+      }
+
       state = state.copyWith(
         elapsedSeconds: newElapsed,
         remainingSeconds: newRemaining,
@@ -150,6 +170,10 @@ class SessionViewModel extends Notifier<SessionState> {
         totalDurationSeconds: null,
       );
 
+      if (newPhase != state.phase) {
+        _audioEngine.setFocusDepth(_focusDepthForPhase(newPhase));
+      }
+
       state = state.copyWith(
         elapsedSeconds: newElapsed,
         remainingSeconds: null,
@@ -158,7 +182,23 @@ class SessionViewModel extends Notifier<SessionState> {
     }
   }
 
+  double _focusDepthForPhase(SessionPhase phase) {
+    switch (phase) {
+      case SessionPhase.settling:
+        return 0.30;
+      case SessionPhase.enteringFocus:
+        return 0.65;
+      case SessionPhase.deepFocus:
+        return 0.85;
+      case SessionPhase.windDown:
+        return 0.50;
+      case SessionPhase.completion:
+        return 0.0;
+    }
+  }
+
   Future<void> stopSession() async {
+    state = state.copyWith(isLoading: true);
     _timer?.cancel();
     _timer = null;
 
@@ -167,6 +207,7 @@ class SessionViewModel extends Notifier<SessionState> {
 
     state = state.copyWith(
       isActive: false,
+      isLoading: false,
       currentSession: null,
       elapsedSeconds: 0,
       remainingSeconds: state.selectedDurationSeconds,

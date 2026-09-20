@@ -106,19 +106,30 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                             borderRadius: BorderRadius.circular(24),
                           ),
                         ),
-                        onPressed: () async {
-                          await viewModel.stopSession();
-                          if (context.mounted) {
-                            context.go('/');
-                          }
-                        },
-                        child: Text(
-                          'actions.stop'.tr(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
+                        onPressed: sessionState.isLoading
+                            ? null
+                            : () async {
+                                await viewModel.stopSession();
+                                if (context.mounted) {
+                                  context.go('/');
+                                }
+                              },
+                        child: sessionState.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                                ),
+                              )
+                            : Text(
+                                'actions.stop'.tr(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
                       ),
                     ),
                   ],

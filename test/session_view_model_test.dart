@@ -53,12 +53,18 @@ class FakeAudioEngine implements AudioEngine {
   Future<void> initialize() async {}
 
   @override
-  Future<void> start(SoundscapeConfig config) async {
+  Future<void> start(
+    SoundscapeConfig config, {
+    int sessionSeed = 42,
+  }) async {
     _stateController.add(AudioEngineState.playing);
   }
 
   @override
   Future<void> updateConfig(SoundscapeConfig config) async {}
+
+  @override
+  Future<void> setFocusDepth(double value) async {}
 
   @override
   Future<void> stop() async {
@@ -70,6 +76,9 @@ class FakeAudioEngine implements AudioEngine {
 
   @override
   Stream<AudioEngineState> get stateStream => _stateController.stream;
+
+  @override
+  Map<String, dynamic> getDiagnostics() => {};
 }
 
 void main() {

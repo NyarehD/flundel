@@ -149,25 +149,37 @@ class HomeScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
+                    disabledBackgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
-                  onPressed: () async {
-                    await viewModel.startSession();
-                    if (context.mounted) {
-                      context.go('/focus');
-                    }
-                  },
-                  child: Text(
-                    'actions.start'.tr(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Colors.black,
-                    ),
-                  ),
+                  onPressed: sessionState.isLoading
+                      ? null
+                      : () async {
+                          await viewModel.startSession();
+                          if (context.mounted) {
+                            context.go('/focus');
+                          }
+                        },
+                  child: sessionState.isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                          ),
+                        )
+                      : Text(
+                          'actions.start'.tr(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: Colors.black,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),

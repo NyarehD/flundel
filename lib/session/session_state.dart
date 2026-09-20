@@ -9,6 +9,7 @@ part 'session_state.freezed.dart';
 abstract class SessionState with _$SessionState {
   const factory SessionState({
     @Default(false) bool isActive,
+    @Default(false) bool isLoading,
     FocusSession? currentSession,
     @Default(0) int elapsedSeconds,
     int? remainingSeconds, // null if "No End"
