@@ -22,10 +22,10 @@ class BinauralGenerator {
     beatHz.setTarget(differenceHz);
   }
 
-  /// Generates binaural stereo tone WAV URI with crossfaded loop ends.
-  String generateBinauralWavUri({
+  /// Generates binaural stereo tone WAV bytes.
+  Uint8List generateBinauralWavBytes({
     double durationSeconds = 3.0,
-    int sampleRate = 44100,
+    int sampleRate = 48000,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4;
@@ -40,8 +40,6 @@ class BinauralGenerator {
     final rightFreq = carrierHz.value + beatHz.value;
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;
-
-    final curVol = volume.value;
 
     for (int i = 0; i < numSamples; i++) {
       final t = i / sampleRate;
@@ -62,7 +60,15 @@ class BinauralGenerator {
       offset += 4;
     }
 
-    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+    return bytes;
+  }
+
+  /// Generates binaural stereo tone WAV URI with crossfaded loop ends.
+  String generateBinauralWavUri({
+    double durationSeconds = 3.0,
+    int sampleRate = 44100,
+  }) {
+    return 'data:audio/wav;base64,${base64Encode(generateBinauralWavBytes(durationSeconds: durationSeconds, sampleRate: sampleRate))}';
   }
 
   static void _writeWavHeader(

@@ -14,10 +14,10 @@ class EnvironmentalLayer {
     volume.setTarget(natureLevel);
   }
 
-  /// Generates soft rain/wind nature ambience WAV URI.
-  String generateRainWavUri({
+  /// Generates soft rain/wind nature ambience WAV bytes.
+  Uint8List generateRainWavBytes({
     double durationSeconds = 3.0,
-    int sampleRate = 44100,
+    int sampleRate = 48000,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4;
@@ -32,7 +32,6 @@ class EnvironmentalLayer {
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;
 
-    final curVol = volume.value;
     double rainDropStateL = 0.0;
     double rainDropStateR = 0.0;
 
@@ -51,7 +50,7 @@ class EnvironmentalLayer {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gain = curVol * 1800.0 * loopFade;
+      final gain = 1800.0 * loopFade;
       final valL = (rainDropStateL * gain).toInt().clamp(-32768, 32767);
       final valR = (rainDropStateR * gain).toInt().clamp(-32768, 32767);
 
@@ -60,7 +59,15 @@ class EnvironmentalLayer {
       offset += 4;
     }
 
-    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+    return bytes;
+  }
+
+  /// Generates soft rain/wind nature ambience WAV URI.
+  String generateRainWavUri({
+    double durationSeconds = 3.0,
+    int sampleRate = 44100,
+  }) {
+    return 'data:audio/wav;base64,${base64Encode(generateRainWavBytes(durationSeconds: durationSeconds, sampleRate: sampleRate))}';
   }
 
   static void _writeWavHeader(

@@ -22,10 +22,10 @@ class NoiseEngine {
     cutoffHz.setTarget(cutoffFrequencyHz);
   }
 
-  /// Generates seamless filtered brown/pink noise WAV data URI.
-  String generateWavUri({
+  /// Generates seamless filtered brown/pink noise WAV bytes.
+  Uint8List generateWavBytes({
     double durationSeconds = 3.0,
-    int sampleRate = 44100,
+    int sampleRate = 48000,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4; // Stereo 16-bit
@@ -44,7 +44,6 @@ class NoiseEngine {
     int offset = 44;
 
     final curWarmth = warmth.value;
-    final curVol = volume.value;
 
     for (int i = 0; i < numSamples; i++) {
       final white = (random.nextDouble() * 2.0) - 1.0;
@@ -81,7 +80,15 @@ class NoiseEngine {
       offset += 4;
     }
 
-    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+    return bytes;
+  }
+
+  /// Generates seamless filtered brown/pink noise WAV data URI.
+  String generateWavUri({
+    double durationSeconds = 3.0,
+    int sampleRate = 44100,
+  }) {
+    return 'data:audio/wav;base64,${base64Encode(generateWavBytes(durationSeconds: durationSeconds, sampleRate: sampleRate))}';
   }
 
   static void _writeWavHeader(

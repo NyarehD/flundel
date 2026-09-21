@@ -144,11 +144,11 @@ class SyntheticAudio {
     return 'data:audio/wav;base64,${base64Encode(bytes)}';
   }
 
-  /// Generates a warm, tranquil chime/piano bell with exponential decay.
-  static String createTranquilChimeWavUri({
+  /// Generates a warm, tranquil chime/piano bell WAV bytes with exponential decay.
+  static Uint8List createTranquilChimeWavBytes({
     double freqHz = 523.25,
     double durationSeconds = 2.5,
-    int sampleRate = 44100,
+    int sampleRate = 48000,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4;
@@ -179,7 +179,16 @@ class SyntheticAudio {
       offset += 4;
     }
 
-    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+    return bytes;
+  }
+
+  /// Generates a warm, tranquil chime/piano bell with exponential decay.
+  static String createTranquilChimeWavUri({
+    double freqHz = 523.25,
+    double durationSeconds = 2.5,
+    int sampleRate = 44100,
+  }) {
+    return 'data:audio/wav;base64,${base64Encode(createTranquilChimeWavBytes(freqHz: freqHz, durationSeconds: durationSeconds, sampleRate: sampleRate))}';
   }
 
   static void _writeWavHeader(

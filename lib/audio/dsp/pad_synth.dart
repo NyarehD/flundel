@@ -22,11 +22,11 @@ class PadSynth {
     reverbSend.setTarget(reverbSendLevel);
   }
 
-  /// Generates multi-oscillator chord pad WAV data URI.
-  String generatePadWavUri({
+  /// Generates multi-oscillator chord pad WAV bytes.
+  Uint8List generatePadWavBytes({
     required List<double> baseFrequencies,
     double durationSeconds = 4.0,
-    int sampleRate = 44100,
+    int sampleRate = 48000,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4; // Stereo 16-bit
@@ -40,7 +40,6 @@ class PadSynth {
     final fadeSamples = (sampleRate * 0.25).toInt();
     int offset = 44;
 
-    final curVol = volume.value;
     final detuneRatio = 1.0 + (detuneCents.value * 0.0005);
 
     for (int i = 0; i < numSamples; i++) {
@@ -81,7 +80,16 @@ class PadSynth {
       offset += 4;
     }
 
-    return 'data:audio/wav;base64,${base64Encode(bytes)}';
+    return bytes;
+  }
+
+  /// Generates multi-oscillator chord pad WAV data URI.
+  String generatePadWavUri({
+    required List<double> baseFrequencies,
+    double durationSeconds = 4.0,
+    int sampleRate = 44100,
+  }) {
+    return 'data:audio/wav;base64,${base64Encode(generatePadWavBytes(baseFrequencies: baseFrequencies, durationSeconds: durationSeconds, sampleRate: sampleRate))}';
   }
 
   static void _writeWavHeader(
