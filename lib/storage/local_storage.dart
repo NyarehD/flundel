@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -12,6 +13,9 @@ abstract interface class LocalStorageRepository {
   bool isPomodoroEnabled();
   Future<void> setPomodoroEnabled(bool enabled);
 
+  bool isCompletionCueEnabled();
+  Future<void> setCompletionCueEnabled(bool enabled);
+
   Future<void> saveActiveSession(Map<String, dynamic> sessionJson);
   Map<String, dynamic>? getActiveSession();
   Future<void> clearActiveSession();
@@ -24,6 +28,7 @@ class HiveLocalStorageRepository implements LocalStorageRepository {
   static const String _keyLastPresetId = 'last_preset_id';
   static const String _keyLastDuration = 'last_duration_seconds';
   static const String _keyPomodoroEnabled = 'pomodoro_enabled';
+  static const String _keyCompletionCueEnabled = 'completion_cue_enabled';
   static const String _keyActiveSession = 'active_session_json';
 
   Box get _settingsBox => Hive.box(_settingsBoxName);
@@ -63,6 +68,15 @@ class HiveLocalStorageRepository implements LocalStorageRepository {
   @override
   Future<void> setPomodoroEnabled(bool enabled) async {
     await _settingsBox.put(_keyPomodoroEnabled, enabled);
+  }
+
+  @override
+  bool isCompletionCueEnabled() =>
+      _settingsBox.get(_keyCompletionCueEnabled, defaultValue: true) as bool;
+
+  @override
+  Future<void> setCompletionCueEnabled(bool enabled) async {
+    await _settingsBox.put(_keyCompletionCueEnabled, enabled);
   }
 
   @override

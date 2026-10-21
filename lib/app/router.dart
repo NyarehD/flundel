@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flundel/features/home/home_screen.dart';
 import 'package:flundel/features/focus/focus_screen.dart';
 import 'package:flundel/features/debug/debug_audio_screen.dart';
+import 'package:flundel/features/debug/generative_visual_debug_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -22,6 +23,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/debug-audio',
         name: 'debug-audio',
         builder: (context, state) => const DebugAudioScreen(),
+      ),
+      GoRoute(
+        path: '/generative-debug',
+        name: 'generative-debug',
+        builder: (context, state) => const GenerativeVisualDebugScreen(),
       ),
     ],
   );

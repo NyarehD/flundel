@@ -17,6 +17,11 @@ _FocusSession _$FocusSessionFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$SessionStatusEnumMap, json['status']) ??
           SessionStatus.active,
       isPomodoro: json['isPomodoro'] as bool? ?? false,
+      pausedAt: json['pausedAt'] == null
+          ? null
+          : DateTime.parse(json['pausedAt'] as String),
+      totalPausedSeconds: (json['totalPausedSeconds'] as num?)?.toInt() ?? 0,
+      completionCueEnabled: json['completionCueEnabled'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$FocusSessionToJson(_FocusSession instance) =>
@@ -24,10 +29,13 @@ Map<String, dynamic> _$FocusSessionToJson(_FocusSession instance) =>
       'id': instance.id,
       'startedAt': instance.startedAt.toIso8601String(),
       'durationSeconds': instance.durationSeconds,
-      'preset': instance.preset,
+      'preset': instance.preset.toJson(),
       'sessionSeed': instance.sessionSeed,
       'status': _$SessionStatusEnumMap[instance.status]!,
       'isPomodoro': instance.isPomodoro,
+      'pausedAt': instance.pausedAt?.toIso8601String(),
+      'totalPausedSeconds': instance.totalPausedSeconds,
+      'completionCueEnabled': instance.completionCueEnabled,
     };
 
 const _$SessionStatusEnumMap = {

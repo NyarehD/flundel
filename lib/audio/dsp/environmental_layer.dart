@@ -18,6 +18,7 @@ class EnvironmentalLayer {
   Uint8List generateRainWavBytes({
     double durationSeconds = 3.0,
     int sampleRate = 48000,
+    double gainMultiplier = 1.0,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4;
@@ -73,7 +74,7 @@ class EnvironmentalLayer {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gain = 2000.0 * loopFade;
+      final gain = 2000.0 * gainMultiplier * loopFade;
       final valL = (combinedL * gain).toInt().clamp(-32768, 32767);
       final valR = (combinedR * gain).toInt().clamp(-32768, 32767);
 
@@ -91,6 +92,113 @@ class EnvironmentalLayer {
     int sampleRate = 44100,
   }) {
     return 'data:audio/wav;base64,${base64Encode(generateRainWavBytes(durationSeconds: durationSeconds, sampleRate: sampleRate))}';
+  }
+
+  /// Generates ocean swell and tidal wave nature ambience WAV bytes.
+  Uint8List generateOceanWavBytes({
+    double durationSeconds = 4.0,
+    int sampleRate = 48000,
+    double gainMultiplier = 1.0,
+  }) {
+    final numSamples = (sampleRate * durationSeconds).toInt();
+    final dataSize = numSamples * 4;
+    final fileSize = 36 + dataSize;
+
+    final bytes = Uint8List(44 + dataSize);
+    final bd = ByteData.sublistView(bytes);
+
+    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+
+    final random = Random(124);
+    final fadeSamples = (sampleRate * 0.15).toInt();
+    int offset = 44;
+
+    double surfL = 0.0;
+    double surfR = 0.0;
+
+    for (int i = 0; i < numSamples; i++) {
+      final t = i / sampleRate;
+
+      // Slow tidal swell LFO (~0.08 Hz)
+      final swell = 0.4 + 0.6 * sin(2 * pi * 0.08 * t).abs();
+
+      final whiteL = (random.nextDouble() * 2.0) - 1.0;
+      final whiteR = (random.nextDouble() * 2.0) - 1.0;
+
+      // Low-pass brown ocean surf filter
+      surfL = (surfL * 0.99) + (whiteL * 0.01 * swell);
+      surfR = (surfR * 0.99) + (whiteR * 0.01 * swell);
+
+      double loopFade = 1.0;
+      if (i < fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * i / fadeSamples));
+      } else if (i > numSamples - fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
+      }
+
+      final gain = 2400.0 * gainMultiplier * loopFade;
+      final valL = (surfL * gain).toInt().clamp(-32768, 32767);
+      final valR = (surfR * gain).toInt().clamp(-32768, 32767);
+
+      bd.setInt16(offset, valL, Endian.little);
+      bd.setInt16(offset + 2, valR, Endian.little);
+      offset += 4;
+    }
+
+    return bytes;
+  }
+
+  /// Generates babbling stream and water ripple nature ambience WAV bytes.
+  Uint8List generateStreamWavBytes({
+    double durationSeconds = 3.0,
+    int sampleRate = 48000,
+    double gainMultiplier = 1.0,
+  }) {
+    final numSamples = (sampleRate * durationSeconds).toInt();
+    final dataSize = numSamples * 4;
+    final fileSize = 36 + dataSize;
+
+    final bytes = Uint8List(44 + dataSize);
+    final bd = ByteData.sublistView(bytes);
+
+    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+
+    final random = Random(256);
+    final fadeSamples = (sampleRate * 0.15).toInt();
+    int offset = 44;
+
+    double rippleL = 0.0;
+    double rippleR = 0.0;
+
+    for (int i = 0; i < numSamples; i++) {
+      final t = i / sampleRate;
+
+      final whiteL = (random.nextDouble() * 2.0) - 1.0;
+      final whiteR = (random.nextDouble() * 2.0) - 1.0;
+
+      // High-pass chatter + bandpass stream ripples
+      rippleL = (rippleL * 0.92) + (whiteL * 0.08);
+      rippleR = (rippleR * 0.92) + (whiteR * 0.08);
+
+      final lfo = 0.8 + 0.2 * sin(2 * pi * 0.25 * t);
+
+      double loopFade = 1.0;
+      if (i < fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * i / fadeSamples));
+      } else if (i > numSamples - fadeSamples) {
+        loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
+      }
+
+      final gain = 1800.0 * gainMultiplier * lfo * loopFade;
+      final valL = (rippleL * gain).toInt().clamp(-32768, 32767);
+      final valR = (rippleR * gain).toInt().clamp(-32768, 32767);
+
+      bd.setInt16(offset, valL, Endian.little);
+      bd.setInt16(offset + 2, valR, Endian.little);
+      offset += 4;
+    }
+
+    return bytes;
   }
 
   static void _writeWavHeader(

@@ -16,6 +16,9 @@ abstract class SoundscapeConfig with _$SoundscapeConfig {
     @HiveField(5) @Default(0.4) double pad,
     @HiveField(6) @Default(0.2) double nature,
     @HiveField(7) @Default(0.2) double binaural,
+    @HiveField(8) @Default(0.0) double beats,
+    @HiveField(9) @Default(0.0) double bass,
+    @HiveField(10) @Default(72) int beatsBpm,
   }) = _SoundscapeConfig;
 
   factory SoundscapeConfig.fromJson(Map<String, dynamic> json) =>

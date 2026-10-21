@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SoundscapeConfig {
 
-@HiveField(0) double get intensity;@HiveField(1) double get warmth;@HiveField(2) double get complexity;@HiveField(3) double get piano;@HiveField(4) double get noise;@HiveField(5) double get pad;@HiveField(6) double get nature;@HiveField(7) double get binaural;
+@HiveField(0) double get intensity;@HiveField(1) double get warmth;@HiveField(2) double get complexity;@HiveField(3) double get piano;@HiveField(4) double get noise;@HiveField(5) double get pad;@HiveField(6) double get nature;@HiveField(7) double get binaural;@HiveField(8) double get beats;@HiveField(9) double get bass;@HiveField(10) int get beatsBpm;
 /// Create a copy of SoundscapeConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SoundscapeConfigCopyWith<SoundscapeConfig> get copyWith => _$SoundscapeConfigCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoundscapeConfig&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.warmth, warmth) || other.warmth == warmth)&&(identical(other.complexity, complexity) || other.complexity == complexity)&&(identical(other.piano, piano) || other.piano == piano)&&(identical(other.noise, noise) || other.noise == noise)&&(identical(other.pad, pad) || other.pad == pad)&&(identical(other.nature, nature) || other.nature == nature)&&(identical(other.binaural, binaural) || other.binaural == binaural));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoundscapeConfig&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.warmth, warmth) || other.warmth == warmth)&&(identical(other.complexity, complexity) || other.complexity == complexity)&&(identical(other.piano, piano) || other.piano == piano)&&(identical(other.noise, noise) || other.noise == noise)&&(identical(other.pad, pad) || other.pad == pad)&&(identical(other.nature, nature) || other.nature == nature)&&(identical(other.binaural, binaural) || other.binaural == binaural)&&(identical(other.beats, beats) || other.beats == beats)&&(identical(other.bass, bass) || other.bass == bass)&&(identical(other.beatsBpm, beatsBpm) || other.beatsBpm == beatsBpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,intensity,warmth,complexity,piano,noise,pad,nature,binaural);
+int get hashCode => Object.hash(runtimeType,intensity,warmth,complexity,piano,noise,pad,nature,binaural,beats,bass,beatsBpm);
 
 @override
 String toString() {
-  return 'SoundscapeConfig(intensity: $intensity, warmth: $warmth, complexity: $complexity, piano: $piano, noise: $noise, pad: $pad, nature: $nature, binaural: $binaural)';
+  return 'SoundscapeConfig(intensity: $intensity, warmth: $warmth, complexity: $complexity, piano: $piano, noise: $noise, pad: $pad, nature: $nature, binaural: $binaural, beats: $beats, bass: $bass, beatsBpm: $beatsBpm)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SoundscapeConfigCopyWith<$Res>  {
   factory $SoundscapeConfigCopyWith(SoundscapeConfig value, $Res Function(SoundscapeConfig) _then) = _$SoundscapeConfigCopyWithImpl;
 @useResult
 $Res call({
-@HiveField(0) double intensity,@HiveField(1) double warmth,@HiveField(2) double complexity,@HiveField(3) double piano,@HiveField(4) double noise,@HiveField(5) double pad,@HiveField(6) double nature,@HiveField(7) double binaural
+@HiveField(0) double intensity,@HiveField(1) double warmth,@HiveField(2) double complexity,@HiveField(3) double piano,@HiveField(4) double noise,@HiveField(5) double pad,@HiveField(6) double nature,@HiveField(7) double binaural,@HiveField(8) double beats,@HiveField(9) double bass,@HiveField(10) int beatsBpm
 });
 
 
@@ -65,7 +65,7 @@ class _$SoundscapeConfigCopyWithImpl<$Res>
 
 /// Create a copy of SoundscapeConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? intensity = null,Object? warmth = null,Object? complexity = null,Object? piano = null,Object? noise = null,Object? pad = null,Object? nature = null,Object? binaural = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? intensity = null,Object? warmth = null,Object? complexity = null,Object? piano = null,Object? noise = null,Object? pad = null,Object? nature = null,Object? binaural = null,Object? beats = null,Object? bass = null,Object? beatsBpm = null,}) {
   return _then(_self.copyWith(
 intensity: null == intensity ? _self.intensity : intensity // ignore: cast_nullable_to_non_nullable
 as double,warmth: null == warmth ? _self.warmth : warmth // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,10 @@ as double,noise: null == noise ? _self.noise : noise // ignore: cast_nullable_to
 as double,pad: null == pad ? _self.pad : pad // ignore: cast_nullable_to_non_nullable
 as double,nature: null == nature ? _self.nature : nature // ignore: cast_nullable_to_non_nullable
 as double,binaural: null == binaural ? _self.binaural : binaural // ignore: cast_nullable_to_non_nullable
-as double,
+as double,beats: null == beats ? _self.beats : beats // ignore: cast_nullable_to_non_nullable
+as double,bass: null == bass ? _self.bass : bass // ignore: cast_nullable_to_non_nullable
+as double,beatsBpm: null == beatsBpm ? _self.beatsBpm : beatsBpm // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -160,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural, @HiveField(8)  double beats, @HiveField(9)  double bass, @HiveField(10)  int beatsBpm)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SoundscapeConfig() when $default != null:
-return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural);case _:
+return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural,_that.beats,_that.bass,_that.beatsBpm);case _:
   return orElse();
 
 }
@@ -181,10 +184,10 @@ return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural, @HiveField(8)  double beats, @HiveField(9)  double bass, @HiveField(10)  int beatsBpm)  $default,) {final _that = this;
 switch (_that) {
 case _SoundscapeConfig():
-return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural);case _:
+return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural,_that.beats,_that.bass,_that.beatsBpm);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +204,10 @@ return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  double intensity, @HiveField(1)  double warmth, @HiveField(2)  double complexity, @HiveField(3)  double piano, @HiveField(4)  double noise, @HiveField(5)  double pad, @HiveField(6)  double nature, @HiveField(7)  double binaural, @HiveField(8)  double beats, @HiveField(9)  double bass, @HiveField(10)  int beatsBpm)?  $default,) {final _that = this;
 switch (_that) {
 case _SoundscapeConfig() when $default != null:
-return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural);case _:
+return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.noise,_that.pad,_that.nature,_that.binaural,_that.beats,_that.bass,_that.beatsBpm);case _:
   return null;
 
 }
@@ -216,7 +219,7 @@ return $default(_that.intensity,_that.warmth,_that.complexity,_that.piano,_that.
 @JsonSerializable()
 
 class _SoundscapeConfig implements SoundscapeConfig {
-  const _SoundscapeConfig({@HiveField(0) this.intensity = 0.5, @HiveField(1) this.warmth = 0.5, @HiveField(2) this.complexity = 0.5, @HiveField(3) this.piano = 0.3, @HiveField(4) this.noise = 0.5, @HiveField(5) this.pad = 0.4, @HiveField(6) this.nature = 0.2, @HiveField(7) this.binaural = 0.2});
+  const _SoundscapeConfig({@HiveField(0) this.intensity = 0.5, @HiveField(1) this.warmth = 0.5, @HiveField(2) this.complexity = 0.5, @HiveField(3) this.piano = 0.3, @HiveField(4) this.noise = 0.5, @HiveField(5) this.pad = 0.4, @HiveField(6) this.nature = 0.2, @HiveField(7) this.binaural = 0.2, @HiveField(8) this.beats = 0.0, @HiveField(9) this.bass = 0.0, @HiveField(10) this.beatsBpm = 72});
   factory _SoundscapeConfig.fromJson(Map<String, dynamic> json) => _$SoundscapeConfigFromJson(json);
 
 @override@JsonKey()@HiveField(0) final  double intensity;
@@ -227,6 +230,9 @@ class _SoundscapeConfig implements SoundscapeConfig {
 @override@JsonKey()@HiveField(5) final  double pad;
 @override@JsonKey()@HiveField(6) final  double nature;
 @override@JsonKey()@HiveField(7) final  double binaural;
+@override@JsonKey()@HiveField(8) final  double beats;
+@override@JsonKey()@HiveField(9) final  double bass;
+@override@JsonKey()@HiveField(10) final  int beatsBpm;
 
 /// Create a copy of SoundscapeConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +247,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoundscapeConfig&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.warmth, warmth) || other.warmth == warmth)&&(identical(other.complexity, complexity) || other.complexity == complexity)&&(identical(other.piano, piano) || other.piano == piano)&&(identical(other.noise, noise) || other.noise == noise)&&(identical(other.pad, pad) || other.pad == pad)&&(identical(other.nature, nature) || other.nature == nature)&&(identical(other.binaural, binaural) || other.binaural == binaural));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoundscapeConfig&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.warmth, warmth) || other.warmth == warmth)&&(identical(other.complexity, complexity) || other.complexity == complexity)&&(identical(other.piano, piano) || other.piano == piano)&&(identical(other.noise, noise) || other.noise == noise)&&(identical(other.pad, pad) || other.pad == pad)&&(identical(other.nature, nature) || other.nature == nature)&&(identical(other.binaural, binaural) || other.binaural == binaural)&&(identical(other.beats, beats) || other.beats == beats)&&(identical(other.bass, bass) || other.bass == bass)&&(identical(other.beatsBpm, beatsBpm) || other.beatsBpm == beatsBpm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,intensity,warmth,complexity,piano,noise,pad,nature,binaural);
+int get hashCode => Object.hash(runtimeType,intensity,warmth,complexity,piano,noise,pad,nature,binaural,beats,bass,beatsBpm);
 
 @override
 String toString() {
-  return 'SoundscapeConfig(intensity: $intensity, warmth: $warmth, complexity: $complexity, piano: $piano, noise: $noise, pad: $pad, nature: $nature, binaural: $binaural)';
+  return 'SoundscapeConfig(intensity: $intensity, warmth: $warmth, complexity: $complexity, piano: $piano, noise: $noise, pad: $pad, nature: $nature, binaural: $binaural, beats: $beats, bass: $bass, beatsBpm: $beatsBpm)';
 }
 
 
@@ -261,7 +267,7 @@ abstract mixin class _$SoundscapeConfigCopyWith<$Res> implements $SoundscapeConf
   factory _$SoundscapeConfigCopyWith(_SoundscapeConfig value, $Res Function(_SoundscapeConfig) _then) = __$SoundscapeConfigCopyWithImpl;
 @override @useResult
 $Res call({
-@HiveField(0) double intensity,@HiveField(1) double warmth,@HiveField(2) double complexity,@HiveField(3) double piano,@HiveField(4) double noise,@HiveField(5) double pad,@HiveField(6) double nature,@HiveField(7) double binaural
+@HiveField(0) double intensity,@HiveField(1) double warmth,@HiveField(2) double complexity,@HiveField(3) double piano,@HiveField(4) double noise,@HiveField(5) double pad,@HiveField(6) double nature,@HiveField(7) double binaural,@HiveField(8) double beats,@HiveField(9) double bass,@HiveField(10) int beatsBpm
 });
 
 
@@ -278,7 +284,7 @@ class __$SoundscapeConfigCopyWithImpl<$Res>
 
 /// Create a copy of SoundscapeConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? intensity = null,Object? warmth = null,Object? complexity = null,Object? piano = null,Object? noise = null,Object? pad = null,Object? nature = null,Object? binaural = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? intensity = null,Object? warmth = null,Object? complexity = null,Object? piano = null,Object? noise = null,Object? pad = null,Object? nature = null,Object? binaural = null,Object? beats = null,Object? bass = null,Object? beatsBpm = null,}) {
   return _then(_SoundscapeConfig(
 intensity: null == intensity ? _self.intensity : intensity // ignore: cast_nullable_to_non_nullable
 as double,warmth: null == warmth ? _self.warmth : warmth // ignore: cast_nullable_to_non_nullable
@@ -288,7 +294,10 @@ as double,noise: null == noise ? _self.noise : noise // ignore: cast_nullable_to
 as double,pad: null == pad ? _self.pad : pad // ignore: cast_nullable_to_non_nullable
 as double,nature: null == nature ? _self.nature : nature // ignore: cast_nullable_to_non_nullable
 as double,binaural: null == binaural ? _self.binaural : binaural // ignore: cast_nullable_to_non_nullable
-as double,
+as double,beats: null == beats ? _self.beats : beats // ignore: cast_nullable_to_non_nullable
+as double,bass: null == bass ? _self.bass : bass // ignore: cast_nullable_to_non_nullable
+as double,beatsBpm: null == beatsBpm ? _self.beatsBpm : beatsBpm // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

@@ -19,7 +19,14 @@ class SyntheticAudio {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final fadeSamples = (sampleRate * 0.1).toInt();
     int offset = 44;
@@ -34,11 +41,16 @@ class SyntheticAudio {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final leftSig = sin(2 * pi * leftHz * t) + 0.12 * sin(2 * pi * leftHz * 2.0 * t);
-      final rightSig = sin(2 * pi * rightHz * t) + 0.12 * sin(2 * pi * rightHz * 2.0 * t);
+      final leftSig =
+          sin(2 * pi * leftHz * t) + 0.12 * sin(2 * pi * leftHz * 2.0 * t);
+      final rightSig =
+          sin(2 * pi * rightHz * t) + 0.12 * sin(2 * pi * rightHz * 2.0 * t);
 
       final leftVal = (leftSig * 2000 * loopFade).toInt().clamp(-32768, 32767);
-      final rightVal = (rightSig * 2000 * loopFade).toInt().clamp(-32768, 32767);
+      final rightVal = (rightSig * 2000 * loopFade).toInt().clamp(
+        -32768,
+        32767,
+      );
 
       bd.setInt16(offset, leftVal, Endian.little);
       bd.setInt16(offset + 2, rightVal, Endian.little);
@@ -60,7 +72,14 @@ class SyntheticAudio {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 1, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 1,
+      sampleRate: sampleRate,
+    );
 
     double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     final random = Random(42);
@@ -108,7 +127,14 @@ class SyntheticAudio {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final chordFreqs = [87.31, 130.81, 164.81, 220.00];
     final fadeSamples = (sampleRate * 0.2).toInt();
@@ -152,6 +178,7 @@ class SyntheticAudio {
     double freqHz = 523.25,
     double durationSeconds = 2.5,
     int sampleRate = 48000,
+    bool softPiano = false,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4;
@@ -160,7 +187,14 @@ class SyntheticAudio {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final random = Random((freqHz * 100).toInt());
     int offset = 44;
@@ -176,13 +210,17 @@ class SyntheticAudio {
       final t = i / sampleRate;
 
       // 1. Attack hammer transient noise (first 12ms)
-      final hammerNoise = (t < 0.012) ? ((random.nextDouble() * 2.0) - 1.0) * exp(-t * 250.0) * 0.35 : 0.0;
+      final hammerNoise = (t < 0.012)
+          ? ((random.nextDouble() * 2.0) - 1.0) *
+                exp(-t * 250.0) *
+                (softPiano ? 0.12 : 0.35)
+          : 0.0;
 
       // 2. Frequency-dependent decay rates per harmonic
-      final decay1 = exp(-t * 1.8);  // Fundamental
-      final decay2 = exp(-t * 3.2);  // 2nd Harmonic
-      final decay3 = exp(-t * 5.0);  // 3rd Harmonic
-      final decay4 = exp(-t * 8.0);  // 4th Harmonic
+      final decay1 = exp(-t * 1.8); // Fundamental
+      final decay2 = exp(-t * 3.2); // 2nd Harmonic
+      final decay3 = exp(-t * 5.0); // 3rd Harmonic
+      final decay4 = exp(-t * 8.0); // 4th Harmonic
 
       // Inharmonic partial frequencies
       final f1 = freqHz * sqrt(1 + inharmonicityB * 1);
@@ -191,12 +229,15 @@ class SyntheticAudio {
       final f4 = 4.0 * freqHz * sqrt(1 + inharmonicityB * 16);
 
       // FM modulator for bell/tine resonance
-      final fmMod = sin(2 * pi * (freqHz * 2.76) * t) * exp(-t * 6.0) * 0.20;
+      final fmMod = softPiano
+          ? 0.0
+          : sin(2 * pi * (freqHz * 2.76) * t) * exp(-t * 6.0) * 0.20;
 
-      final body = sin(2 * pi * f1 * t + fmMod) * decay1 * 0.65 +
-          sin(2 * pi * f2 * t) * decay2 * 0.22 +
-          sin(2 * pi * f3 * t) * decay3 * 0.10 +
-          sin(2 * pi * f4 * t) * decay4 * 0.03 +
+      final body =
+          sin(2 * pi * f1 * t + fmMod) * decay1 * (softPiano ? 0.78 : 0.65) +
+          sin(2 * pi * f2 * t) * decay2 * (softPiano ? 0.16 : 0.22) +
+          sin(2 * pi * f3 * t) * decay3 * (softPiano ? 0.045 : 0.10) +
+          sin(2 * pi * f4 * t) * decay4 * (softPiano ? 0.015 : 0.03) +
           hammerNoise;
 
       final sampleL = body * gainL;

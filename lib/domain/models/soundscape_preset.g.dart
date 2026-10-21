@@ -18,6 +18,6 @@ Map<String, dynamic> _$SoundscapePresetToJson(_SoundscapePreset instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'config': instance.config,
+      'config': instance.config.toJson(),
       'visualPreset': instance.visualPreset,
     };

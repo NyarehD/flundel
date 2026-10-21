@@ -14,9 +14,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SessionState {
 
- bool get isActive; bool get isLoading; FocusSession? get currentSession; int get elapsedSeconds; int? get remainingSeconds;// null if "No End"
+ bool get isActive; bool get isPaused; bool get isLoading; FocusSession? get currentSession; int get elapsedSeconds; int? get remainingSeconds;// null if "No End"
  SessionPhase get phase; SoundscapePreset get selectedPreset; int? get selectedDurationSeconds;// null if "No End"
- bool get pomodoroEnabled;
+ bool get pomodoroEnabled; bool get completionCueEnabled;
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,16 +27,16 @@ $SessionStateCopyWith<SessionState> get copyWith => _$SessionStateCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionState&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.currentSession, currentSession) || other.currentSession == currentSession)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.remainingSeconds, remainingSeconds) || other.remainingSeconds == remainingSeconds)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.selectedPreset, selectedPreset) || other.selectedPreset == selectedPreset)&&(identical(other.selectedDurationSeconds, selectedDurationSeconds) || other.selectedDurationSeconds == selectedDurationSeconds)&&(identical(other.pomodoroEnabled, pomodoroEnabled) || other.pomodoroEnabled == pomodoroEnabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionState&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.currentSession, currentSession) || other.currentSession == currentSession)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.remainingSeconds, remainingSeconds) || other.remainingSeconds == remainingSeconds)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.selectedPreset, selectedPreset) || other.selectedPreset == selectedPreset)&&(identical(other.selectedDurationSeconds, selectedDurationSeconds) || other.selectedDurationSeconds == selectedDurationSeconds)&&(identical(other.pomodoroEnabled, pomodoroEnabled) || other.pomodoroEnabled == pomodoroEnabled)&&(identical(other.completionCueEnabled, completionCueEnabled) || other.completionCueEnabled == completionCueEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isActive,isLoading,currentSession,elapsedSeconds,remainingSeconds,phase,selectedPreset,selectedDurationSeconds,pomodoroEnabled);
+int get hashCode => Object.hash(runtimeType,isActive,isPaused,isLoading,currentSession,elapsedSeconds,remainingSeconds,phase,selectedPreset,selectedDurationSeconds,pomodoroEnabled,completionCueEnabled);
 
 @override
 String toString() {
-  return 'SessionState(isActive: $isActive, isLoading: $isLoading, currentSession: $currentSession, elapsedSeconds: $elapsedSeconds, remainingSeconds: $remainingSeconds, phase: $phase, selectedPreset: $selectedPreset, selectedDurationSeconds: $selectedDurationSeconds, pomodoroEnabled: $pomodoroEnabled)';
+  return 'SessionState(isActive: $isActive, isPaused: $isPaused, isLoading: $isLoading, currentSession: $currentSession, elapsedSeconds: $elapsedSeconds, remainingSeconds: $remainingSeconds, phase: $phase, selectedPreset: $selectedPreset, selectedDurationSeconds: $selectedDurationSeconds, pomodoroEnabled: $pomodoroEnabled, completionCueEnabled: $completionCueEnabled)';
 }
 
 
@@ -47,7 +47,7 @@ abstract mixin class $SessionStateCopyWith<$Res>  {
   factory $SessionStateCopyWith(SessionState value, $Res Function(SessionState) _then) = _$SessionStateCopyWithImpl;
 @useResult
 $Res call({
- bool isActive, bool isLoading, FocusSession? currentSession, int elapsedSeconds, int? remainingSeconds, SessionPhase phase, SoundscapePreset selectedPreset, int? selectedDurationSeconds, bool pomodoroEnabled
+ bool isActive, bool isPaused, bool isLoading, FocusSession? currentSession, int elapsedSeconds, int? remainingSeconds, SessionPhase phase, SoundscapePreset selectedPreset, int? selectedDurationSeconds, bool pomodoroEnabled, bool completionCueEnabled
 });
 
 
@@ -64,9 +64,10 @@ class _$SessionStateCopyWithImpl<$Res>
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isActive = null,Object? isLoading = null,Object? currentSession = freezed,Object? elapsedSeconds = null,Object? remainingSeconds = freezed,Object? phase = null,Object? selectedPreset = null,Object? selectedDurationSeconds = freezed,Object? pomodoroEnabled = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isActive = null,Object? isPaused = null,Object? isLoading = null,Object? currentSession = freezed,Object? elapsedSeconds = null,Object? remainingSeconds = freezed,Object? phase = null,Object? selectedPreset = null,Object? selectedDurationSeconds = freezed,Object? pomodoroEnabled = null,Object? completionCueEnabled = null,}) {
   return _then(_self.copyWith(
 isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as bool,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
 as bool,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,currentSession: freezed == currentSession ? _self.currentSession : currentSession // ignore: cast_nullable_to_non_nullable
 as FocusSession?,elapsedSeconds: null == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
@@ -75,6 +76,7 @@ as int?,phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_n
 as SessionPhase,selectedPreset: null == selectedPreset ? _self.selectedPreset : selectedPreset // ignore: cast_nullable_to_non_nullable
 as SoundscapePreset,selectedDurationSeconds: freezed == selectedDurationSeconds ? _self.selectedDurationSeconds : selectedDurationSeconds // ignore: cast_nullable_to_non_nullable
 as int?,pomodoroEnabled: null == pomodoroEnabled ? _self.pomodoroEnabled : pomodoroEnabled // ignore: cast_nullable_to_non_nullable
+as bool,completionCueEnabled: null == completionCueEnabled ? _self.completionCueEnabled : completionCueEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -181,10 +183,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isActive,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isActive,  bool isPaused,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled,  bool completionCueEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SessionState() when $default != null:
-return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled);case _:
+return $default(_that.isActive,_that.isPaused,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled,_that.completionCueEnabled);case _:
   return orElse();
 
 }
@@ -202,10 +204,10 @@ return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapse
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isActive,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isActive,  bool isPaused,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled,  bool completionCueEnabled)  $default,) {final _that = this;
 switch (_that) {
 case _SessionState():
-return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled);case _:
+return $default(_that.isActive,_that.isPaused,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled,_that.completionCueEnabled);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -222,10 +224,10 @@ return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapse
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isActive,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isActive,  bool isPaused,  bool isLoading,  FocusSession? currentSession,  int elapsedSeconds,  int? remainingSeconds,  SessionPhase phase,  SoundscapePreset selectedPreset,  int? selectedDurationSeconds,  bool pomodoroEnabled,  bool completionCueEnabled)?  $default,) {final _that = this;
 switch (_that) {
 case _SessionState() when $default != null:
-return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled);case _:
+return $default(_that.isActive,_that.isPaused,_that.isLoading,_that.currentSession,_that.elapsedSeconds,_that.remainingSeconds,_that.phase,_that.selectedPreset,_that.selectedDurationSeconds,_that.pomodoroEnabled,_that.completionCueEnabled);case _:
   return null;
 
 }
@@ -237,10 +239,11 @@ return $default(_that.isActive,_that.isLoading,_that.currentSession,_that.elapse
 
 
 class _SessionState implements SessionState {
-  const _SessionState({this.isActive = false, this.isLoading = false, this.currentSession, this.elapsedSeconds = 0, this.remainingSeconds, this.phase = SessionPhase.settling, required this.selectedPreset, this.selectedDurationSeconds, this.pomodoroEnabled = false});
+  const _SessionState({this.isActive = false, this.isPaused = false, this.isLoading = false, this.currentSession, this.elapsedSeconds = 0, this.remainingSeconds, this.phase = SessionPhase.settling, required this.selectedPreset, this.selectedDurationSeconds, this.pomodoroEnabled = false, this.completionCueEnabled = true});
   
 
 @override@JsonKey() final  bool isActive;
+@override@JsonKey() final  bool isPaused;
 @override@JsonKey() final  bool isLoading;
 @override final  FocusSession? currentSession;
 @override@JsonKey() final  int elapsedSeconds;
@@ -251,6 +254,7 @@ class _SessionState implements SessionState {
 @override final  int? selectedDurationSeconds;
 // null if "No End"
 @override@JsonKey() final  bool pomodoroEnabled;
+@override@JsonKey() final  bool completionCueEnabled;
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -262,16 +266,16 @@ _$SessionStateCopyWith<_SessionState> get copyWith => __$SessionStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionState&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.currentSession, currentSession) || other.currentSession == currentSession)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.remainingSeconds, remainingSeconds) || other.remainingSeconds == remainingSeconds)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.selectedPreset, selectedPreset) || other.selectedPreset == selectedPreset)&&(identical(other.selectedDurationSeconds, selectedDurationSeconds) || other.selectedDurationSeconds == selectedDurationSeconds)&&(identical(other.pomodoroEnabled, pomodoroEnabled) || other.pomodoroEnabled == pomodoroEnabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SessionState&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.currentSession, currentSession) || other.currentSession == currentSession)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.remainingSeconds, remainingSeconds) || other.remainingSeconds == remainingSeconds)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.selectedPreset, selectedPreset) || other.selectedPreset == selectedPreset)&&(identical(other.selectedDurationSeconds, selectedDurationSeconds) || other.selectedDurationSeconds == selectedDurationSeconds)&&(identical(other.pomodoroEnabled, pomodoroEnabled) || other.pomodoroEnabled == pomodoroEnabled)&&(identical(other.completionCueEnabled, completionCueEnabled) || other.completionCueEnabled == completionCueEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isActive,isLoading,currentSession,elapsedSeconds,remainingSeconds,phase,selectedPreset,selectedDurationSeconds,pomodoroEnabled);
+int get hashCode => Object.hash(runtimeType,isActive,isPaused,isLoading,currentSession,elapsedSeconds,remainingSeconds,phase,selectedPreset,selectedDurationSeconds,pomodoroEnabled,completionCueEnabled);
 
 @override
 String toString() {
-  return 'SessionState(isActive: $isActive, isLoading: $isLoading, currentSession: $currentSession, elapsedSeconds: $elapsedSeconds, remainingSeconds: $remainingSeconds, phase: $phase, selectedPreset: $selectedPreset, selectedDurationSeconds: $selectedDurationSeconds, pomodoroEnabled: $pomodoroEnabled)';
+  return 'SessionState(isActive: $isActive, isPaused: $isPaused, isLoading: $isLoading, currentSession: $currentSession, elapsedSeconds: $elapsedSeconds, remainingSeconds: $remainingSeconds, phase: $phase, selectedPreset: $selectedPreset, selectedDurationSeconds: $selectedDurationSeconds, pomodoroEnabled: $pomodoroEnabled, completionCueEnabled: $completionCueEnabled)';
 }
 
 
@@ -282,7 +286,7 @@ abstract mixin class _$SessionStateCopyWith<$Res> implements $SessionStateCopyWi
   factory _$SessionStateCopyWith(_SessionState value, $Res Function(_SessionState) _then) = __$SessionStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isActive, bool isLoading, FocusSession? currentSession, int elapsedSeconds, int? remainingSeconds, SessionPhase phase, SoundscapePreset selectedPreset, int? selectedDurationSeconds, bool pomodoroEnabled
+ bool isActive, bool isPaused, bool isLoading, FocusSession? currentSession, int elapsedSeconds, int? remainingSeconds, SessionPhase phase, SoundscapePreset selectedPreset, int? selectedDurationSeconds, bool pomodoroEnabled, bool completionCueEnabled
 });
 
 
@@ -299,9 +303,10 @@ class __$SessionStateCopyWithImpl<$Res>
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isActive = null,Object? isLoading = null,Object? currentSession = freezed,Object? elapsedSeconds = null,Object? remainingSeconds = freezed,Object? phase = null,Object? selectedPreset = null,Object? selectedDurationSeconds = freezed,Object? pomodoroEnabled = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isActive = null,Object? isPaused = null,Object? isLoading = null,Object? currentSession = freezed,Object? elapsedSeconds = null,Object? remainingSeconds = freezed,Object? phase = null,Object? selectedPreset = null,Object? selectedDurationSeconds = freezed,Object? pomodoroEnabled = null,Object? completionCueEnabled = null,}) {
   return _then(_SessionState(
 isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as bool,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
 as bool,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,currentSession: freezed == currentSession ? _self.currentSession : currentSession // ignore: cast_nullable_to_non_nullable
 as FocusSession?,elapsedSeconds: null == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
@@ -310,6 +315,7 @@ as int?,phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_n
 as SessionPhase,selectedPreset: null == selectedPreset ? _self.selectedPreset : selectedPreset // ignore: cast_nullable_to_non_nullable
 as SoundscapePreset,selectedDurationSeconds: freezed == selectedDurationSeconds ? _self.selectedDurationSeconds : selectedDurationSeconds // ignore: cast_nullable_to_non_nullable
 as int?,pomodoroEnabled: null == pomodoroEnabled ? _self.pomodoroEnabled : pomodoroEnabled // ignore: cast_nullable_to_non_nullable
+as bool,completionCueEnabled: null == completionCueEnabled ? _self.completionCueEnabled : completionCueEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -218,8 +218,8 @@ return $default(_that.id,_that.name,_that.config,_that.visualPreset);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
 
+@JsonSerializable(explicitToJson: true)
 class _SoundscapePreset implements SoundscapePreset {
   const _SoundscapePreset({@HiveField(0) required this.id, @HiveField(1) required this.name, @HiveField(2) required this.config, @HiveField(3) this.visualPreset = 'particles_waves'});
   factory _SoundscapePreset.fromJson(Map<String, dynamic> json) => _$SoundscapePresetFromJson(json);

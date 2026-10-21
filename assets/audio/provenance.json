@@ -1,0 +1,217 @@
+{
+  "assets": {
+    "chimes/chime_1.wav": {
+      "channels": 2,
+      "duration_seconds": 3.0,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -5.78,
+      "rms_dbfs": -26.0,
+      "sample_rate_hz": 48000,
+      "sha256": "99da5675ae771417a95edeb5ede978ce8b8726fcd79899e9243a0ba2b876a42f"
+    },
+    "chimes/chime_2.wav": {
+      "channels": 2,
+      "duration_seconds": 3.0,
+      "loop_seam_delta": null,
+      "max_dc_offset": 1e-06,
+      "peak_dbfs": -7.07,
+      "rms_dbfs": -26.0,
+      "sample_rate_hz": 48000,
+      "sha256": "3c5d011f67b0e70fd1d8458f28de25830e8340e2c6aa40be935835b3f7350245"
+    },
+    "chimes/chime_3.wav": {
+      "channels": 2,
+      "duration_seconds": 3.0,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -6.97,
+      "rms_dbfs": -26.0,
+      "sample_rate_hz": 48000,
+      "sha256": "908a6dcbaf87c9ddc1a20ec4ace2a70a8c3ef28b0fdbfcb35bcaa6de2c63583a"
+    },
+    "chimes/chime_4.wav": {
+      "channels": 2,
+      "duration_seconds": 3.0,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -7.58,
+      "rms_dbfs": -26.0,
+      "sample_rate_hz": 48000,
+      "sha256": "8d1d97de756d7352f0d9bcde3610e4044b21f6f22984d831da44e4dc1d5ae18d"
+    },
+    "completion/gentle_completion.wav": {
+      "channels": 2,
+      "duration_seconds": 2.4,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -12.03,
+      "rms_dbfs": -30.0,
+      "sample_rate_hz": 48000,
+      "sha256": "811d4767908bf2514a3615f75f109f1744816d41f91fc48b7ec55c2e93018623"
+    },
+    "drone_root.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.002014,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -14.19,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "17c237999c618b34181f450e0fc3a1141f3382dee3cd60e07308d8ce56033d76"
+    },
+    "nature/rain_loop.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.027435,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -9.04,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "32d0b9fae100c50b01c059203f15407201bb16f35ea243e7fed60fbdd2ec4974"
+    },
+    "pads/chords/am7.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.006165,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.56,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "7bbb9d77ff892053f06b60cf0aadecdee57a3fe2daba03bcc175ef4ba44cd73e"
+    },
+    "pads/chords/am9.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.003296,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.14,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "98ddcc09d39c8f696d0a47ba21662178645e6c1f01ddfd81586409dc76aad707"
+    },
+    "pads/chords/cMaj7.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.003845,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.43,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "b2c82b8ba16cae1279533ecd44eba221441d4e86f1dfaa948a141c8acb820b4a"
+    },
+    "pads/chords/cMaj9.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.005829,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.1,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "0e85949d0027574a841f04947c18d01915df63252b2bbc44a96e35f46f82a505"
+    },
+    "pads/chords/dMaj7.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.005371,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.66,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "d546a5308f6cec2a33edfcd510a330bc57a3d35897093690aa6f7db779e88d9a"
+    },
+    "pads/chords/em7.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.004089,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.35,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "ea21ed6af9a07dfabf87f8324fb2a7044a13b66f432fa16cb9596a5d7a3bf9ce"
+    },
+    "pads/chords/fMaj7.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.001831,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -13.25,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "e5e8db5c183501937bfbfdfebfe37f12f47363f69608183739eb4eb59dcb3bdb"
+    },
+    "pads/chords/fMaj7Sharp11.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.004089,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -12.95,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "7b7faaf62781028405165cc77af972845b740f5faf7de41e467b384612c6510a"
+    },
+    "pads/pad_ambient.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.002014,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -14.19,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "17c237999c618b34181f450e0fc3a1141f3382dee3cd60e07308d8ce56033d76"
+    },
+    "piano/note_1.wav": {
+      "channels": 2,
+      "duration_seconds": 2.8,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -10.61,
+      "rms_dbfs": -27.0,
+      "sample_rate_hz": 48000,
+      "sha256": "27ec4661a078fe8f9fd54a695651e340138af8e6e6a93a3ce0155633293e992f"
+    },
+    "piano/note_2.wav": {
+      "channels": 2,
+      "duration_seconds": 2.8,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -10.74,
+      "rms_dbfs": -27.0,
+      "sample_rate_hz": 48000,
+      "sha256": "3c3ada3854ecb4aa597441df8aba05843d9aa9b5192eae8c167b0a73bb4557b2"
+    },
+    "piano/note_3.wav": {
+      "channels": 2,
+      "duration_seconds": 2.8,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -10.57,
+      "rms_dbfs": -27.0,
+      "sample_rate_hz": 48000,
+      "sha256": "d8de0f0a4fd406dcd198cd2e1306452dbd34a8bb2b32c83e57187e214105f8a7"
+    },
+    "piano/note_4.wav": {
+      "channels": 2,
+      "duration_seconds": 2.8,
+      "loop_seam_delta": null,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -10.65,
+      "rms_dbfs": -27.0,
+      "sample_rate_hz": 48000,
+      "sha256": "981fbf85d7c7d81b68a7b7c1b8badea3495dd6332043f47c834787c9eaad5b59"
+    },
+    "texture_noise.wav": {
+      "channels": 2,
+      "duration_seconds": 5.7,
+      "loop_seam_delta": 0.004517,
+      "max_dc_offset": 0.0,
+      "peak_dbfs": -11.23,
+      "rms_dbfs": -24.0,
+      "sample_rate_hz": 48000,
+      "sha256": "079267ce99af9a999b5095dbef3b624ade3137105b1e982cd801ebdec9a46e7d"
+    }
+  },
+  "generator": "Dart synthesis: PadSynth, NoiseEngine, EnvironmentalLayer, SyntheticAudio; 48 kHz stereo PCM; deterministic noise seeds 42 and 88.",
+  "imports": {},
+  "provenance": "Generated in this repository by tool/generate_assets.dart. No third-party audio is bundled."
+}

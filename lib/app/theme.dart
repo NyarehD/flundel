@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color backgroundColor = Color(0xFF0D0F12);
-  static const Color surfaceColor = Color(0xFF161920);
-  static const Color accentColor = Color(0xFF7C8BA1);
-  static const Color primaryText = Color(0xFFECEFF4);
-  static const Color secondaryText = Color(0xFF8892B0);
-  static const Color highlightColor = Color(0xFFD8DEE9);
+  static const Color backgroundColor = Color(0xFF050505);
+  static const Color surfaceColor = Color(0xFF101010);
+  static const Color accentColor = Color(0xFFECECEC);
+  static const Color primaryText = Color(0xFFF4F4F4);
+  static const Color secondaryText = Color(0xFFA3A3A3);
+  static const Color highlightColor = Color(0xFFFFFFFF);
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -23,10 +23,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surfaceColor,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -41,10 +38,7 @@ class AppTheme {
           fontWeight: FontWeight.w400,
           letterSpacing: 0.5,
         ),
-        bodyMedium: TextStyle(
-          color: secondaryText,
-          fontSize: 14,
-        ),
+        bodyMedium: TextStyle(color: secondaryText, fontSize: 14),
       ),
     );
   }

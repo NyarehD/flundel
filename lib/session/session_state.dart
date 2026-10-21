@@ -9,6 +9,7 @@ part 'session_state.freezed.dart';
 abstract class SessionState with _$SessionState {
   const factory SessionState({
     @Default(false) bool isActive,
+    @Default(false) bool isPaused,
     @Default(false) bool isLoading,
     FocusSession? currentSession,
     @Default(0) int elapsedSeconds,
@@ -17,5 +18,6 @@ abstract class SessionState with _$SessionState {
     required SoundscapePreset selectedPreset,
     int? selectedDurationSeconds, // null if "No End"
     @Default(false) bool pomodoroEnabled,
+    @Default(true) bool completionCueEnabled,
   }) = _SessionState;
 }

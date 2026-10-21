@@ -35,6 +35,7 @@ class PadSynth {
     required List<double> baseFrequencies,
     double durationSeconds = 4.0,
     int sampleRate = 48000,
+    double gainMultiplier = 1.0,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4; // Stereo 16-bit
@@ -114,7 +115,7 @@ class PadSynth {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gain = 2400.0 * loopFade;
+      final gain = 2400.0 * gainMultiplier * loopFade;
       final valL = (lpfL * gain).toInt().clamp(-32768, 32767);
       final valR = (lpfR * gain).toInt().clamp(-32768, 32767);
 

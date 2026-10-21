@@ -6,7 +6,15 @@
     "reading": "Reading",
     "quiet_focus": "Quiet Focus",
     "piano_focus": "Piano Focus",
-    "night_focus": "Night Focus"
+    "night_focus": "Night Focus",
+    "ocean_drift": "Ocean Drift",
+    "zen_meditation": "Zen Meditation",
+    "lofi_study": "Lo-Fi Study",
+    "forest_stream": "Forest Stream"
+  },
+  "home": {
+    "preview_label": "Ambient preview",
+    "duration": "Session length"
   },
   "durations": {
     "min15": "15 min",
@@ -18,7 +26,10 @@
   },
   "actions": {
     "start": "START SESSION",
+    "return_to_session": "RETURN TO SESSION",
     "stop": "STOP",
+    "pause": "Pause session",
+    "resume": "Resume session",
     "pomodoro": "Pomodoro",
     "customize": "Customize Sound"
   },
@@ -26,11 +37,19 @@
     "intensity": "Intensity",
     "warmth": "Warmth",
     "piano": "Piano",
+    "beats": "Beats",
+    "bass": "Bass",
+    "completion_sound": "Completion sound",
     "nature": "Nature",
     "binaural": "Binaural",
     "complexity": "Complexity",
     "noise": "Noise",
-    "pad": "Pad"
+    "pad": "Pad",
+    "update_failed": "The sound could not be updated. Your previous settings are still active."
+  },
+  "player": {
+    "customize_hint": "Tap the controls icon to adjust this sound",
+    "paused": "Paused"
   },
   "session": {
     "phase_settling": "Settling",

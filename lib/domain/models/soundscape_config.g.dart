@@ -16,6 +16,9 @@ _SoundscapeConfig _$SoundscapeConfigFromJson(Map<String, dynamic> json) =>
       pad: (json['pad'] as num?)?.toDouble() ?? 0.4,
       nature: (json['nature'] as num?)?.toDouble() ?? 0.2,
       binaural: (json['binaural'] as num?)?.toDouble() ?? 0.2,
+      beats: (json['beats'] as num?)?.toDouble() ?? 0.0,
+      bass: (json['bass'] as num?)?.toDouble() ?? 0.0,
+      beatsBpm: (json['beatsBpm'] as num?)?.toInt() ?? 72,
     );
 
 Map<String, dynamic> _$SoundscapeConfigToJson(_SoundscapeConfig instance) =>
@@ -28,4 +31,7 @@ Map<String, dynamic> _$SoundscapeConfigToJson(_SoundscapeConfig instance) =>
       'pad': instance.pad,
       'nature': instance.nature,
       'binaural': instance.binaural,
+      'beats': instance.beats,
+      'bass': instance.bass,
+      'beatsBpm': instance.beatsBpm,
     };

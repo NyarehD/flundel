@@ -26,6 +26,7 @@ class NoiseEngine {
   Uint8List generateWavBytes({
     double durationSeconds = 3.0,
     int sampleRate = 48000,
+    double gainMultiplier = 1.0,
   }) {
     final numSamples = (sampleRate * durationSeconds).toInt();
     final dataSize = numSamples * 4; // Stereo 16-bit
@@ -113,7 +114,7 @@ class NoiseEngine {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gainFactor = 300.0 * loopFade;
+      final gainFactor = 300.0 * gainMultiplier * loopFade;
       final valL = (filteredL * lfoL * gainFactor).toInt().clamp(-32768, 32767);
       final valR = (filteredR * lfoR * gainFactor).toInt().clamp(-32768, 32767);
 

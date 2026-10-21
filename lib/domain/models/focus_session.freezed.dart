@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FocusSession {
 
-@HiveField(0) String get id;@HiveField(1) DateTime get startedAt;@HiveField(2) int? get durationSeconds;@HiveField(3) SoundscapePreset get preset;@HiveField(4) int get sessionSeed;@HiveField(5) SessionStatus get status;@HiveField(6) bool get isPomodoro;
+@HiveField(0) String get id;@HiveField(1) DateTime get startedAt;@HiveField(2) int? get durationSeconds;@HiveField(3) SoundscapePreset get preset;@HiveField(4) int get sessionSeed;@HiveField(5) SessionStatus get status;@HiveField(6) bool get isPomodoro;@HiveField(7) DateTime? get pausedAt;@HiveField(8) int get totalPausedSeconds;@HiveField(9) bool get completionCueEnabled;
 /// Create a copy of FocusSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $FocusSessionCopyWith<FocusSession> get copyWith => _$FocusSessionCopyWithImpl<F
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FocusSession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.sessionSeed, sessionSeed) || other.sessionSeed == sessionSeed)&&(identical(other.status, status) || other.status == status)&&(identical(other.isPomodoro, isPomodoro) || other.isPomodoro == isPomodoro));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FocusSession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.sessionSeed, sessionSeed) || other.sessionSeed == sessionSeed)&&(identical(other.status, status) || other.status == status)&&(identical(other.isPomodoro, isPomodoro) || other.isPomodoro == isPomodoro)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.totalPausedSeconds, totalPausedSeconds) || other.totalPausedSeconds == totalPausedSeconds)&&(identical(other.completionCueEnabled, completionCueEnabled) || other.completionCueEnabled == completionCueEnabled));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,startedAt,durationSeconds,preset,sessionSeed,status,isPomodoro);
+int get hashCode => Object.hash(runtimeType,id,startedAt,durationSeconds,preset,sessionSeed,status,isPomodoro,pausedAt,totalPausedSeconds,completionCueEnabled);
 
 @override
 String toString() {
-  return 'FocusSession(id: $id, startedAt: $startedAt, durationSeconds: $durationSeconds, preset: $preset, sessionSeed: $sessionSeed, status: $status, isPomodoro: $isPomodoro)';
+  return 'FocusSession(id: $id, startedAt: $startedAt, durationSeconds: $durationSeconds, preset: $preset, sessionSeed: $sessionSeed, status: $status, isPomodoro: $isPomodoro, pausedAt: $pausedAt, totalPausedSeconds: $totalPausedSeconds, completionCueEnabled: $completionCueEnabled)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $FocusSessionCopyWith<$Res>  {
   factory $FocusSessionCopyWith(FocusSession value, $Res Function(FocusSession) _then) = _$FocusSessionCopyWithImpl;
 @useResult
 $Res call({
-@HiveField(0) String id,@HiveField(1) DateTime startedAt,@HiveField(2) int? durationSeconds,@HiveField(3) SoundscapePreset preset,@HiveField(4) int sessionSeed,@HiveField(5) SessionStatus status,@HiveField(6) bool isPomodoro
+@HiveField(0) String id,@HiveField(1) DateTime startedAt,@HiveField(2) int? durationSeconds,@HiveField(3) SoundscapePreset preset,@HiveField(4) int sessionSeed,@HiveField(5) SessionStatus status,@HiveField(6) bool isPomodoro,@HiveField(7) DateTime? pausedAt,@HiveField(8) int totalPausedSeconds,@HiveField(9) bool completionCueEnabled
 });
 
 
@@ -65,7 +65,7 @@ class _$FocusSessionCopyWithImpl<$Res>
 
 /// Create a copy of FocusSession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? durationSeconds = freezed,Object? preset = null,Object? sessionSeed = null,Object? status = null,Object? isPomodoro = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? durationSeconds = freezed,Object? preset = null,Object? sessionSeed = null,Object? status = null,Object? isPomodoro = null,Object? pausedAt = freezed,Object? totalPausedSeconds = null,Object? completionCueEnabled = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,9 @@ as int?,preset: null == preset ? _self.preset : preset // ignore: cast_nullable_
 as SoundscapePreset,sessionSeed: null == sessionSeed ? _self.sessionSeed : sessionSeed // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SessionStatus,isPomodoro: null == isPomodoro ? _self.isPomodoro : isPomodoro // ignore: cast_nullable_to_non_nullable
+as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,totalPausedSeconds: null == totalPausedSeconds ? _self.totalPausedSeconds : totalPausedSeconds // ignore: cast_nullable_to_non_nullable
+as int,completionCueEnabled: null == completionCueEnabled ? _self.completionCueEnabled : completionCueEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -168,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro, @HiveField(7)  DateTime? pausedAt, @HiveField(8)  int totalPausedSeconds, @HiveField(9)  bool completionCueEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FocusSession() when $default != null:
-return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro);case _:
+return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro,_that.pausedAt,_that.totalPausedSeconds,_that.completionCueEnabled);case _:
   return orElse();
 
 }
@@ -189,10 +192,10 @@ return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro, @HiveField(7)  DateTime? pausedAt, @HiveField(8)  int totalPausedSeconds, @HiveField(9)  bool completionCueEnabled)  $default,) {final _that = this;
 switch (_that) {
 case _FocusSession():
-return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro);case _:
+return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro,_that.pausedAt,_that.totalPausedSeconds,_that.completionCueEnabled);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +212,10 @@ return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  String id, @HiveField(1)  DateTime startedAt, @HiveField(2)  int? durationSeconds, @HiveField(3)  SoundscapePreset preset, @HiveField(4)  int sessionSeed, @HiveField(5)  SessionStatus status, @HiveField(6)  bool isPomodoro, @HiveField(7)  DateTime? pausedAt, @HiveField(8)  int totalPausedSeconds, @HiveField(9)  bool completionCueEnabled)?  $default,) {final _that = this;
 switch (_that) {
 case _FocusSession() when $default != null:
-return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro);case _:
+return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_that.sessionSeed,_that.status,_that.isPomodoro,_that.pausedAt,_that.totalPausedSeconds,_that.completionCueEnabled);case _:
   return null;
 
 }
@@ -221,10 +224,10 @@ return $default(_that.id,_that.startedAt,_that.durationSeconds,_that.preset,_tha
 }
 
 /// @nodoc
-@JsonSerializable()
 
+@JsonSerializable(explicitToJson: true)
 class _FocusSession implements FocusSession {
-  const _FocusSession({@HiveField(0) required this.id, @HiveField(1) required this.startedAt, @HiveField(2) this.durationSeconds, @HiveField(3) required this.preset, @HiveField(4) this.sessionSeed = 12345, @HiveField(5) this.status = SessionStatus.active, @HiveField(6) this.isPomodoro = false});
+  const _FocusSession({@HiveField(0) required this.id, @HiveField(1) required this.startedAt, @HiveField(2) this.durationSeconds, @HiveField(3) required this.preset, @HiveField(4) this.sessionSeed = 12345, @HiveField(5) this.status = SessionStatus.active, @HiveField(6) this.isPomodoro = false, @HiveField(7) this.pausedAt, @HiveField(8) this.totalPausedSeconds = 0, @HiveField(9) this.completionCueEnabled = true});
   factory _FocusSession.fromJson(Map<String, dynamic> json) => _$FocusSessionFromJson(json);
 
 @override@HiveField(0) final  String id;
@@ -234,6 +237,9 @@ class _FocusSession implements FocusSession {
 @override@JsonKey()@HiveField(4) final  int sessionSeed;
 @override@JsonKey()@HiveField(5) final  SessionStatus status;
 @override@JsonKey()@HiveField(6) final  bool isPomodoro;
+@override@HiveField(7) final  DateTime? pausedAt;
+@override@JsonKey()@HiveField(8) final  int totalPausedSeconds;
+@override@JsonKey()@HiveField(9) final  bool completionCueEnabled;
 
 /// Create a copy of FocusSession
 /// with the given fields replaced by the non-null parameter values.
@@ -248,16 +254,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FocusSession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.sessionSeed, sessionSeed) || other.sessionSeed == sessionSeed)&&(identical(other.status, status) || other.status == status)&&(identical(other.isPomodoro, isPomodoro) || other.isPomodoro == isPomodoro));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FocusSession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.sessionSeed, sessionSeed) || other.sessionSeed == sessionSeed)&&(identical(other.status, status) || other.status == status)&&(identical(other.isPomodoro, isPomodoro) || other.isPomodoro == isPomodoro)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.totalPausedSeconds, totalPausedSeconds) || other.totalPausedSeconds == totalPausedSeconds)&&(identical(other.completionCueEnabled, completionCueEnabled) || other.completionCueEnabled == completionCueEnabled));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,startedAt,durationSeconds,preset,sessionSeed,status,isPomodoro);
+int get hashCode => Object.hash(runtimeType,id,startedAt,durationSeconds,preset,sessionSeed,status,isPomodoro,pausedAt,totalPausedSeconds,completionCueEnabled);
 
 @override
 String toString() {
-  return 'FocusSession(id: $id, startedAt: $startedAt, durationSeconds: $durationSeconds, preset: $preset, sessionSeed: $sessionSeed, status: $status, isPomodoro: $isPomodoro)';
+  return 'FocusSession(id: $id, startedAt: $startedAt, durationSeconds: $durationSeconds, preset: $preset, sessionSeed: $sessionSeed, status: $status, isPomodoro: $isPomodoro, pausedAt: $pausedAt, totalPausedSeconds: $totalPausedSeconds, completionCueEnabled: $completionCueEnabled)';
 }
 
 
@@ -268,7 +274,7 @@ abstract mixin class _$FocusSessionCopyWith<$Res> implements $FocusSessionCopyWi
   factory _$FocusSessionCopyWith(_FocusSession value, $Res Function(_FocusSession) _then) = __$FocusSessionCopyWithImpl;
 @override @useResult
 $Res call({
-@HiveField(0) String id,@HiveField(1) DateTime startedAt,@HiveField(2) int? durationSeconds,@HiveField(3) SoundscapePreset preset,@HiveField(4) int sessionSeed,@HiveField(5) SessionStatus status,@HiveField(6) bool isPomodoro
+@HiveField(0) String id,@HiveField(1) DateTime startedAt,@HiveField(2) int? durationSeconds,@HiveField(3) SoundscapePreset preset,@HiveField(4) int sessionSeed,@HiveField(5) SessionStatus status,@HiveField(6) bool isPomodoro,@HiveField(7) DateTime? pausedAt,@HiveField(8) int totalPausedSeconds,@HiveField(9) bool completionCueEnabled
 });
 
 
@@ -285,7 +291,7 @@ class __$FocusSessionCopyWithImpl<$Res>
 
 /// Create a copy of FocusSession
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? startedAt = null,Object? durationSeconds = freezed,Object? preset = null,Object? sessionSeed = null,Object? status = null,Object? isPomodoro = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? startedAt = null,Object? durationSeconds = freezed,Object? preset = null,Object? sessionSeed = null,Object? status = null,Object? isPomodoro = null,Object? pausedAt = freezed,Object? totalPausedSeconds = null,Object? completionCueEnabled = null,}) {
   return _then(_FocusSession(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -294,6 +300,9 @@ as int?,preset: null == preset ? _self.preset : preset // ignore: cast_nullable_
 as SoundscapePreset,sessionSeed: null == sessionSeed ? _self.sessionSeed : sessionSeed // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SessionStatus,isPomodoro: null == isPomodoro ? _self.isPomodoro : isPomodoro // ignore: cast_nullable_to_non_nullable
+as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,totalPausedSeconds: null == totalPausedSeconds ? _self.totalPausedSeconds : totalPausedSeconds // ignore: cast_nullable_to_non_nullable
+as int,completionCueEnabled: null == completionCueEnabled ? _self.completionCueEnabled : completionCueEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
