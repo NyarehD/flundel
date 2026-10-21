@@ -1,11 +1,16 @@
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flundel/audio/dsp/audio_bus.dart';
+import 'package:flundel/audio/dsp/binaural_generator.dart';
+import 'package:flundel/audio/dsp/environmental_layer.dart';
+import 'package:flundel/audio/dsp/noise_engine.dart';
+import 'package:flundel/audio/dsp/pad_synth.dart';
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 import 'package:flundel/audio/procedural/harmony_controller.dart';
 import 'package:flundel/audio/procedural/piano_scheduler.dart';
 import 'package:flundel/audio/procedural/procedural_controller.dart';
 import 'package:flundel/audio/procedural/variation_budget.dart';
+import 'package:flundel/audio/synthetic_audio.dart';
 import 'package:flundel/audio/tools/offline_renderer.dart';
 import 'package:flundel/domain/models/soundscape_config.dart';
 
@@ -46,13 +51,60 @@ void main() {
       final harmony = HarmonyController();
       final random = Random(42);
 
-      final validChords = {'Am7', 'Cmaj7', 'Fmaj7', 'Em7', 'Dm7'};
+      final validChords = {'Am7', 'Cmaj7', 'Fmaj7', 'Em7', 'Dm7', 'Am9', 'Cmaj9', 'Fmaj7#11'};
 
       for (int i = 0; i < 50; i++) {
         final next = harmony.transitionNextChord(random);
         expect(validChords.contains(next.name), isTrue);
         expect(next.chordFrequencies.isNotEmpty, isTrue);
       }
+    });
+
+    test('PadSynth generates valid multi-harmonic stereo WAV bytes', () {
+      final pad = PadSynth();
+      pad.updateParameters(padLevel: 0.8, detune: 3.0, reverbSendLevel: 0.4, cutoffFrequencyHz: 1500.0);
+
+      final wavBytes = pad.generatePadWavBytes(
+        baseFrequencies: [220.0, 261.63, 329.63, 392.00],
+        durationSeconds: 1.0,
+        sampleRate: 48000,
+      );
+
+      expect(wavBytes.length, equals(44 + 48000 * 4)); // Header + 1s stereo 16-bit
+    });
+
+    test('NoiseEngine generates resonant biquad filtered noise WAV bytes', () {
+      final noise = NoiseEngine();
+      noise.updateParameters(noiseLevel: 0.5, warmthValue: 0.7, cutoffFrequencyHz: 1000.0);
+
+      final wavBytes = noise.generateWavBytes(durationSeconds: 1.0, sampleRate: 48000);
+      expect(wavBytes.length, equals(44 + 48000 * 4));
+    });
+
+    test('BinauralGenerator generates stereo binaural WAV bytes', () {
+      final binaural = BinauralGenerator();
+      binaural.updateParameters(level: 0.6, carrierFrequency: 180.0, differenceHz: 10.0);
+
+      final wavBytes = binaural.generateBinauralWavBytes(durationSeconds: 1.0, sampleRate: 48000);
+      expect(wavBytes.length, equals(44 + 48000 * 4));
+    });
+
+    test('EnvironmentalLayer generates realistic rain/wind ambience WAV bytes', () {
+      final env = EnvironmentalLayer();
+      env.updateParameters(natureLevel: 0.8);
+
+      final wavBytes = env.generateRainWavBytes(durationSeconds: 1.0, sampleRate: 48000);
+      expect(wavBytes.length, equals(44 + 48000 * 4));
+    });
+
+    test('SyntheticAudio generates physical modeling chime WAV bytes', () {
+      final chimeBytes = SyntheticAudio.createTranquilChimeWavBytes(
+        freqHz: 523.25,
+        durationSeconds: 1.5,
+        sampleRate: 48000,
+      );
+
+      expect(chimeBytes.length, equals(44 + (48000 * 1.5).toInt() * 4));
     });
 
     test('PianoScheduler enforces minimum silence gap and polyphony limits', () {

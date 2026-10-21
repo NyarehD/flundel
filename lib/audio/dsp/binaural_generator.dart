@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
-/// Independent stereo sine wave generator for binaural focus beats.
+/// Independent stereo generator for binaural focus beats with warm harmonic layering and isochronic modulation.
 class BinauralGenerator {
   final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
   final SmoothedValue carrierHz = SmoothedValue(180.0, smoothingDurationSeconds: 0.5);
@@ -22,7 +22,7 @@ class BinauralGenerator {
     beatHz.setTarget(differenceHz);
   }
 
-  /// Generates binaural stereo tone WAV bytes.
+  /// Generates binaural stereo tone WAV bytes with warm harmonic overtones.
   Uint8List generateBinauralWavBytes({
     double durationSeconds = 3.0,
     int sampleRate = 48000,
@@ -38,11 +38,26 @@ class BinauralGenerator {
 
     final leftFreq = carrierHz.value;
     final rightFreq = carrierHz.value + beatHz.value;
+    final bHz = beatHz.value;
+
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;
 
     for (int i = 0; i < numSamples; i++) {
       final t = i / sampleRate;
+
+      // Soft isochronic pulse envelope modulation at beat frequency (gentle 15% pulse)
+      final isoPulse = 0.85 + 0.15 * (0.5 + 0.5 * sin(2 * pi * bHz * t));
+
+      // Left Channel: Fundamental + subtle 2nd overtone
+      final leftFundamental = sin(2 * pi * leftFreq * t);
+      final leftHarmonic = 0.12 * sin(2 * pi * (leftFreq * 2.0) * t);
+      final leftSig = (leftFundamental + leftHarmonic) * isoPulse;
+
+      // Right Channel: Fundamental + subtle 2nd overtone
+      final rightFundamental = sin(2 * pi * rightFreq * t);
+      final rightHarmonic = 0.12 * sin(2 * pi * (rightFreq * 2.0) * t);
+      final rightSig = (rightFundamental + rightHarmonic) * isoPulse;
 
       double loopFade = 1.0;
       if (i < fadeSamples) {
@@ -51,9 +66,9 @@ class BinauralGenerator {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gainFactor = 2000.0 * loopFade;
-      final leftVal = (sin(2 * pi * leftFreq * t) * gainFactor).toInt().clamp(-32768, 32767);
-      final rightVal = (sin(2 * pi * rightFreq * t) * gainFactor).toInt().clamp(-32768, 32767);
+      final gainFactor = 1800.0 * loopFade;
+      final leftVal = (leftSig * gainFactor).toInt().clamp(-32768, 32767);
+      final rightVal = (rightSig * gainFactor).toInt().clamp(-32768, 32767);
 
       bd.setInt16(offset, leftVal, Endian.little);
       bd.setInt16(offset + 2, rightVal, Endian.little);

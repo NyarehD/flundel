@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/audio/audio_engine.dart';
@@ -14,8 +14,6 @@ import 'package:flundel/audio/procedural/procedural_controller.dart';
 import 'package:flundel/audio/synthetic_audio.dart';
 
 class AudioEngineImpl implements AudioEngine {
-  final SoLoud _soloud = SoLoud.instance;
-
   final _analysisController = StreamController<AudioAnalysis>.broadcast();
   final _stateController = StreamController<AudioEngineState>.broadcast();
 
@@ -32,15 +30,14 @@ class AudioEngineImpl implements AudioEngine {
   final EnvironmentalLayer environmentalLayer = EnvironmentalLayer();
   final AudioBus audioBus = AudioBus();
 
-  AudioSource? _noiseSource;
-  AudioSource? _padSource;
-  AudioSource? _binauralSource;
-  AudioSource? _envSource;
+  late final AudioPlayer _noisePlayer;
+  late final AudioPlayer _padPlayer;
+  late final AudioPlayer _binauralPlayer;
+  late final AudioPlayer _envPlayer;
 
-  SoundHandle? _noiseHandle;
-  SoundHandle? _padHandle;
-  SoundHandle? _binauralHandle;
-  SoundHandle? _envHandle;
+  // Piano voice pool for polyphony management (up to 8 voices)
+  final List<AudioPlayer> _pianoVoicePool = [];
+  int _nextPianoVoiceIndex = 0;
 
   bool _initialized = false;
   int _underrunsCount = 0;
@@ -69,28 +66,38 @@ class AudioEngineImpl implements AudioEngine {
   Future<void> initialize() async {
     if (_initialized) return;
 
+    _noisePlayer = AudioPlayer();
+    _padPlayer = AudioPlayer();
+    _binauralPlayer = AudioPlayer();
+    _envPlayer = AudioPlayer();
+
+    for (int i = 0; i < 8; i++) {
+      _pianoVoicePool.add(AudioPlayer());
+    }
+
     try {
-      if (!_soloud.isInitialized) {
-        await _soloud.init(
-          bufferSize: 2048,  // Prevents hardware buffer starvation on Android
-          sampleRate: 48000, // Matches native Android Audio HAL clock rate
-        );
-      }
-
-      final noiseBytes = noiseEngine.generateWavBytes(sampleRate: 48000);
-      final padBytes = padSynth.generatePadWavBytes(
+      final noiseUri = noiseEngine.generateWavUri();
+      final padUri = padSynth.generatePadWavUri(
         baseFrequencies: proceduralController.harmonyController.currentChord.chordFrequencies,
-        sampleRate: 48000,
       );
-      final binauralBytes = binauralGenerator.generateBinauralWavBytes(sampleRate: 48000);
-      final envBytes = environmentalLayer.generateRainWavBytes(sampleRate: 48000);
+      final binauralUri = binauralGenerator.generateBinauralWavUri();
+      final envUri = environmentalLayer.generateRainWavUri();
 
-      _noiseSource = await _soloud.loadMem('noise_bed.wav', noiseBytes);
-      _padSource = await _soloud.loadMem('pad_bed.wav', padBytes);
-      _binauralSource = await _soloud.loadMem('binaural_bed.wav', binauralBytes);
-      _envSource = await _soloud.loadMem('env_bed.wav', envBytes);
+      await Future.wait([
+        _noisePlayer.setUrl(noiseUri),
+        _padPlayer.setUrl(padUri),
+        _binauralPlayer.setUrl(binauralUri),
+        _envPlayer.setUrl(envUri),
+      ]);
+
+      await Future.wait([
+        _noisePlayer.setLoopMode(LoopMode.one),
+        _padPlayer.setLoopMode(LoopMode.one),
+        _binauralPlayer.setLoopMode(LoopMode.one),
+        _envPlayer.setLoopMode(LoopMode.one),
+      ]);
     } catch (e) {
-      debugPrint('AudioEngineImpl initialize fallback/error: $e');
+      debugPrint('AudioEngineImpl initialize error: $e');
       _underrunsCount++;
     }
 
@@ -118,22 +125,17 @@ class AudioEngineImpl implements AudioEngine {
     _currentState = AudioEngineState.playing;
     _stateController.add(_currentState);
 
-    try {
-      if (_noiseSource != null) {
-        _noiseHandle = await _soloud.play(_noiseSource!, volume: 0.001, looping: true);
-      }
-      if (_padSource != null) {
-        _padHandle = await _soloud.play(_padSource!, volume: 0.001, looping: true);
-      }
-      if (_binauralSource != null) {
-        _binauralHandle = await _soloud.play(_binauralSource!, volume: 0.001, looping: true);
-      }
-      if (_envSource != null) {
-        _envHandle = await _soloud.play(_envSource!, volume: 0.001, looping: true);
-      }
+    await _applyVolumes();
 
-      await _applyVolumes();
-    } catch (_) {
+    try {
+      await Future.wait([
+        _noisePlayer.play(),
+        _padPlayer.play(),
+        _binauralPlayer.play(),
+        _envPlayer.play(),
+      ]);
+    } catch (e) {
+      debugPrint('AudioEngineImpl play error: $e');
       _underrunsCount++;
     }
 
@@ -163,23 +165,13 @@ class AudioEngineImpl implements AudioEngine {
     _controlRateTimer = null;
 
     try {
-      final handles = [_noiseHandle, _padHandle, _binauralHandle, _envHandle].whereType<SoundHandle>().toList();
-      for (final handle in handles) {
-        _soloud.fadeVolume(handle, 0.0, const Duration(milliseconds: 400));
-      }
-
-      Future.delayed(const Duration(milliseconds: 450), () {
-        for (final handle in handles) {
-          try {
-            _soloud.stop(handle);
-          } catch (_) {}
-        }
-      });
-
-      _noiseHandle = null;
-      _padHandle = null;
-      _binauralHandle = null;
-      _envHandle = null;
+      await Future.wait([
+        _noisePlayer.pause(),
+        _padPlayer.pause(),
+        _binauralPlayer.pause(),
+        _envPlayer.pause(),
+        ..._pianoVoicePool.map((p) => p.pause()),
+      ]);
     } catch (_) {}
 
     _currentState = AudioEngineState.stopped;
@@ -284,18 +276,10 @@ class AudioEngineImpl implements AudioEngine {
     );
 
     try {
-      if (_noiseHandle != null) {
-        _soloud.fadeVolume(_noiseHandle!, noiseVol, const Duration(milliseconds: 100));
-      }
-      if (_padHandle != null) {
-        _soloud.fadeVolume(_padHandle!, padVol, const Duration(milliseconds: 100));
-      }
-      if (_binauralHandle != null) {
-        _soloud.fadeVolume(_binauralHandle!, binauralVol, const Duration(milliseconds: 100));
-      }
-      if (_envHandle != null) {
-        _soloud.fadeVolume(_envHandle!, envVol, const Duration(milliseconds: 100));
-      }
+      await _noisePlayer.setVolume(noiseVol);
+      await _padPlayer.setVolume(padVol);
+      await _binauralPlayer.setVolume(binauralVol);
+      await _envPlayer.setVolume(envVol);
     } catch (_) {
       _underrunsCount++;
     }
@@ -305,12 +289,14 @@ class AudioEngineImpl implements AudioEngine {
     final anySolo = _anySoloActive;
     if (layerMuted['piano']! || (anySolo && !layerSolo['piano']!)) return;
 
+    final voiceIndex = _nextPianoVoiceIndex;
+    _nextPianoVoiceIndex = (_nextPianoVoiceIndex + 1) % _pianoVoicePool.length;
+    final player = _pianoVoicePool[voiceIndex];
+
     proceduralController.pianoScheduler.onVoiceStarted();
 
     try {
-      final noteBytes = SyntheticAudio.createTranquilChimeWavBytes(freqHz: freqHz, sampleRate: 48000);
-      final chimeSource = await _soloud.loadMem('chime_${freqHz.toInt()}.wav', noteBytes);
-
+      final noteUri = SyntheticAudio.createTranquilChimeWavUri(freqHz: freqHz);
       final effectiveVol = audioBus.calculateEffectiveGain(
         baseLevel: velocity * _currentConfig.piano,
         isMuted: false,
@@ -319,7 +305,9 @@ class AudioEngineImpl implements AudioEngine {
         busGain: audioBus.tonalBusGain.value,
       );
 
-      await _soloud.play(chimeSource, volume: effectiveVol, looping: false);
+      await player.setVolume(effectiveVol);
+      await player.setUrl(noteUri);
+      await player.play();
     } catch (_) {
       _underrunsCount++;
     } finally {
@@ -335,8 +323,8 @@ class AudioEngineImpl implements AudioEngine {
       'state': _currentState.name,
       'activePianoVoices': proceduralController.pianoScheduler.activeVoiceCount,
       'maxPolyphony': PianoScheduler.maxPolyphony,
-      'sampleRateHz': 48000,
-      'bufferSizeFrames': 2048,
+      'sampleRateHz': 44100,
+      'bufferSizeFrames': 256,
       'underrunsCount': _underrunsCount,
       'focusDepth': proceduralController.focusDepth.value,
       'currentChord': proceduralController.harmonyController.currentChord.name,
@@ -358,7 +346,13 @@ class AudioEngineImpl implements AudioEngine {
 
   void dispose() {
     _controlRateTimer?.cancel();
-    stop();
+    _noisePlayer.dispose();
+    _padPlayer.dispose();
+    _binauralPlayer.dispose();
+    _envPlayer.dispose();
+    for (final p in _pianoVoicePool) {
+      p.dispose();
+    }
     _analysisController.close();
     _stateController.close();
   }

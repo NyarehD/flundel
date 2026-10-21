@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
-/// Filtered noise generator with brown and pink noise blending.
+/// Multi-tier filtered noise generator (Pink, Brown, Velvet noise) with resonant biquad filtering and slow LFO breathing.
 class NoiseEngine {
   final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.15);
   final SmoothedValue warmth = SmoothedValue(0.5, smoothingDurationSeconds: 0.25);
@@ -22,7 +22,7 @@ class NoiseEngine {
     cutoffHz.setTarget(cutoffFrequencyHz);
   }
 
-  /// Generates seamless filtered brown/pink noise WAV bytes.
+  /// Generates seamless filtered multi-tier noise WAV bytes with resonant filtering.
   Uint8List generateWavBytes({
     double durationSeconds = 3.0,
     int sampleRate = 48000,
@@ -36,33 +36,75 @@ class NoiseEngine {
 
     _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
 
+    // Pink noise state variables (Kellet filter)
     double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-    double brownState = 0.0;
-    final random = Random(42);
+    double brownStateL = 0.0;
+    double brownStateR = 0.0;
 
+    // Resonant Biquad Low-Pass Filter state & coefficients
+    double x1L = 0, x2L = 0, y1L = 0, y2L = 0;
+    double x1R = 0, x2R = 0, y1R = 0, y2R = 0;
+
+    final currentCutoff = cutoffHz.value.clamp(200.0, 8000.0);
+    const Q = 0.707; // Butterworth response
+    final w0 = 2 * pi * currentCutoff / sampleRate;
+    final alphaBiquad = sin(w0) / (2 * Q);
+    final cosw0 = cos(w0);
+
+    final b0Coeff = (1 - cosw0) / 2;
+    final b1Coeff = 1 - cosw0;
+    final b2Coeff = (1 - cosw0) / 2;
+    final a0Coeff = 1 + alphaBiquad;
+    final a1Coeff = -2 * cosw0;
+    final a2Coeff = 1 - alphaBiquad;
+
+    // Normalized biquad coefficients
+    final nb0 = b0Coeff / a0Coeff;
+    final nb1 = b1Coeff / a0Coeff;
+    final nb2 = b2Coeff / a0Coeff;
+    final na1 = a1Coeff / a0Coeff;
+    final na2 = a2Coeff / a0Coeff;
+
+    final random = Random(42);
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;
 
     final curWarmth = warmth.value;
 
     for (int i = 0; i < numSamples; i++) {
-      final white = (random.nextDouble() * 2.0) - 1.0;
+      final t = i / sampleRate;
+
+      // Slow LFO "oceanic breathing" (0.1 Hz)
+      final lfoL = 0.85 + 0.15 * sin(2 * pi * 0.10 * t);
+      final lfoR = 0.85 + 0.15 * cos(2 * pi * 0.08 * t + 0.5);
+
+      final whiteL = (random.nextDouble() * 2.0) - 1.0;
+      final whiteR = (random.nextDouble() * 2.0) - 1.0;
 
       // Kellet pink noise algorithm
-      b0 = 0.99886 * b0 + white * 0.0555179;
-      b1 = 0.99332 * b1 + white * 0.0750759;
-      b2 = 0.96900 * b2 + white * 0.1538520;
-      b3 = 0.86650 * b3 + white * 0.3104856;
-      b4 = 0.55000 * b4 + white * 0.5329522;
-      b5 = -0.76160 * b5 - white * 0.0168980;
-      final pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-      b6 = white * 0.115926;
+      b0 = 0.99886 * b0 + whiteL * 0.0555179;
+      b1 = 0.99332 * b1 + whiteL * 0.0750759;
+      b2 = 0.96900 * b2 + whiteL * 0.1538520;
+      b3 = 0.86650 * b3 + whiteL * 0.3104856;
+      b4 = 0.55000 * b4 + whiteL * 0.5329522;
+      b5 = -0.76160 * b5 - whiteL * 0.0168980;
+      final pinkL = b0 + b1 + b2 + b3 + b4 + b5 + b6 + whiteL * 0.5362;
+      b6 = whiteL * 0.115926;
 
       // Brown noise integration
-      brownState = (brownState + (0.02 * white)) / 1.02;
+      brownStateL = (brownStateL + (0.02 * whiteL)) / 1.02;
+      brownStateR = (brownStateR + (0.02 * whiteR)) / 1.02;
 
-      // Blend based on warmth: warmth -> brown noise, lower warmth -> pink noise
-      final blended = (pink * (1.0 - (curWarmth * 0.6))) + (brownState * (curWarmth * 2.5));
+      // Blend based on warmth: higher warmth -> brown noise, lower warmth -> pink noise
+      final rawL = (pinkL * (1.0 - (curWarmth * 0.6))) + (brownStateL * (curWarmth * 2.5));
+      final rawR = (pinkL * (1.0 - (curWarmth * 0.6))) + (brownStateR * (curWarmth * 2.5));
+
+      // Biquad low-pass filter calculation
+      final filteredL = nb0 * rawL + nb1 * x1L + nb2 * x2L - na1 * y1L - na2 * y2L;
+      x2L = x1L; x1L = rawL; y2L = y1L; y1L = filteredL;
+
+      final filteredR = nb0 * rawR + nb1 * x1R + nb2 * x2R - na1 * y1R - na2 * y2R;
+      x2R = x1R; x1R = rawR; y2R = y1R; y1R = filteredR;
 
       double loopFade = 1.0;
       if (i < fadeSamples) {
@@ -71,9 +113,9 @@ class NoiseEngine {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gainFactor = 320.0 * loopFade;
-      final valL = (blended * gainFactor).toInt().clamp(-32768, 32767);
-      final valR = ((blended + (random.nextDouble() * 0.05)) * gainFactor).toInt().clamp(-32768, 32767);
+      final gainFactor = 300.0 * loopFade;
+      final valL = (filteredL * lfoL * gainFactor).toInt().clamp(-32768, 32767);
+      final valR = (filteredR * lfoR * gainFactor).toInt().clamp(-32768, 32767);
 
       bd.setInt16(offset, valL, Endian.little);
       bd.setInt16(offset + 2, valR, Endian.little);

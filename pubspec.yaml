@@ -43,6 +43,7 @@ flutter:
   assets:
     - assets/translations/
     - assets/audio/
+    - assets/audio/chimes/
     - assets/audio/piano/
     - assets/audio/pads/
     - assets/audio/nature/

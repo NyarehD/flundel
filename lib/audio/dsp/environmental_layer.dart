@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
-/// Environmental nature texture layer (rain/wind/stream) with parameter smoothing.
+/// Environmental nature texture layer (organic rain, wind rumble, stream ripples) with parameter smoothing.
 class EnvironmentalLayer {
   final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
 
@@ -14,7 +14,7 @@ class EnvironmentalLayer {
     volume.setTarget(natureLevel);
   }
 
-  /// Generates soft rain/wind nature ambience WAV bytes.
+  /// Generates soft rain, wind, and river stream nature ambience WAV bytes.
   Uint8List generateRainWavBytes({
     double durationSeconds = 3.0,
     int sampleRate = 48000,
@@ -32,16 +32,39 @@ class EnvironmentalLayer {
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;
 
+    // Rain drop impulse bandpass state
     double rainDropStateL = 0.0;
     double rainDropStateR = 0.0;
 
+    // Wind low-pass rumble state
+    double windRumbleL = 0.0;
+    double windRumbleR = 0.0;
+
     for (int i = 0; i < numSamples; i++) {
+      final t = i / sampleRate;
+
+      // 1. Rain drop Poisson impulses
+      final impulseRollL = random.nextDouble();
+      final impulseRollR = random.nextDouble();
+
+      // Droplet density probability threshold (~120 drops/sec per channel)
+      final dropL = impulseRollL < 0.0025 ? ((random.nextDouble() * 2.0) - 1.0) * 1.8 : 0.0;
+      final dropR = impulseRollR < 0.0025 ? ((random.nextDouble() * 2.0) - 1.0) * 1.8 : 0.0;
+
       final whiteL = (random.nextDouble() * 2.0) - 1.0;
       final whiteR = (random.nextDouble() * 2.0) - 1.0;
 
-      // Soft rain drop impulse simulation using bandpass filtering
-      rainDropStateL = (rainDropStateL * 0.92) + (whiteL * 0.08);
-      rainDropStateR = (rainDropStateR * 0.92) + (whiteR * 0.08);
+      // Bandpass filtering for rain patter (1.5 kHz – 5.0 kHz response)
+      rainDropStateL = (rainDropStateL * 0.88) + ((whiteL * 0.15 + dropL) * 0.12);
+      rainDropStateR = (rainDropStateR * 0.88) + ((whiteR * 0.15 + dropR) * 0.12);
+
+      // 2. Wind rumble (Low-pass filtered brown noise, 80 Hz – 250 Hz)
+      final windLfo = 0.70 + 0.30 * sin(2 * pi * 0.15 * t);
+      windRumbleL = (windRumbleL * 0.985) + (whiteL * 0.015);
+      windRumbleR = (windRumbleR * 0.985) + (whiteR * 0.015);
+
+      final combinedL = (rainDropStateL * 0.65) + (windRumbleL * windLfo * 1.8);
+      final combinedR = (rainDropStateR * 0.65) + (windRumbleR * windLfo * 1.8);
 
       double loopFade = 1.0;
       if (i < fadeSamples) {
@@ -50,9 +73,9 @@ class EnvironmentalLayer {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final gain = 1800.0 * loopFade;
-      final valL = (rainDropStateL * gain).toInt().clamp(-32768, 32767);
-      final valR = (rainDropStateR * gain).toInt().clamp(-32768, 32767);
+      final gain = 2000.0 * loopFade;
+      final valL = (combinedL * gain).toInt().clamp(-32768, 32767);
+      final valR = (combinedR * gain).toInt().clamp(-32768, 32767);
 
       bd.setInt16(offset, valL, Endian.little);
       bd.setInt16(offset + 2, valR, Endian.little);

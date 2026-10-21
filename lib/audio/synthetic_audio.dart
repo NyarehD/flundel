@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 class SyntheticAudio {
-  /// Generates a subtle, smooth binaural stereo wave (10 Hz Alpha beat for focus).
+  /// Generates a subtle, smooth binaural stereo wave (10 Hz Alpha beat for focus) with warm harmonics.
   static String createBinauralWavUri({
     double baseHz = 180.0,
     double beatHz = 10.0,
@@ -34,8 +34,11 @@ class SyntheticAudio {
         loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
       }
 
-      final leftVal = (sin(2 * pi * leftHz * t) * 2200 * loopFade).toInt().clamp(-32768, 32767);
-      final rightVal = (sin(2 * pi * rightHz * t) * 2200 * loopFade).toInt().clamp(-32768, 32767);
+      final leftSig = sin(2 * pi * leftHz * t) + 0.12 * sin(2 * pi * leftHz * 2.0 * t);
+      final rightSig = sin(2 * pi * rightHz * t) + 0.12 * sin(2 * pi * rightHz * 2.0 * t);
+
+      final leftVal = (leftSig * 2000 * loopFade).toInt().clamp(-32768, 32767);
+      final rightVal = (rightSig * 2000 * loopFade).toInt().clamp(-32768, 32767);
 
       bd.setInt16(offset, leftVal, Endian.little);
       bd.setInt16(offset + 2, rightVal, Endian.little);
@@ -144,7 +147,7 @@ class SyntheticAudio {
     return 'data:audio/wav;base64,${base64Encode(bytes)}';
   }
 
-  /// Generates a warm, tranquil chime/piano bell WAV bytes with exponential decay.
+  /// Generates a warm, tranquil chime/piano bell WAV bytes using physical modeling & FM synthesis.
   static Uint8List createTranquilChimeWavBytes({
     double freqHz = 523.25,
     double durationSeconds = 2.5,
@@ -159,20 +162,48 @@ class SyntheticAudio {
 
     _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
 
+    final random = Random((freqHz * 100).toInt());
     int offset = 44;
+
+    // Pitch-based stereo pan (-0.4 for low notes, +0.4 for high notes)
+    final panOffset = ((freqHz - 260.0) / 600.0).clamp(-0.4, 0.4);
+    final gainL = 1.0 - panOffset;
+    final gainR = 1.0 + panOffset;
+
+    const inharmonicityB = 0.00012; // Stiff string inharmonicity factor
+
     for (int i = 0; i < numSamples; i++) {
       final t = i / sampleRate;
 
-      final envelope = exp(-t * 2.2);
-      final body = sin(2 * pi * freqHz * t) +
-          0.25 * sin(2 * pi * freqHz * 2.0 * t) +
-          0.08 * sin(2 * pi * freqHz * 3.0 * t);
+      // 1. Attack hammer transient noise (first 12ms)
+      final hammerNoise = (t < 0.012) ? ((random.nextDouble() * 2.0) - 1.0) * exp(-t * 250.0) * 0.35 : 0.0;
 
-      final sampleL = body * envelope;
-      final sampleR = (body + 0.1 * sin(2 * pi * freqHz * 1.5 * t)) * envelope;
+      // 2. Frequency-dependent decay rates per harmonic
+      final decay1 = exp(-t * 1.8);  // Fundamental
+      final decay2 = exp(-t * 3.2);  // 2nd Harmonic
+      final decay3 = exp(-t * 5.0);  // 3rd Harmonic
+      final decay4 = exp(-t * 8.0);  // 4th Harmonic
 
-      final valL = (sampleL * 4500).toInt().clamp(-32768, 32767);
-      final valR = (sampleR * 4500).toInt().clamp(-32768, 32767);
+      // Inharmonic partial frequencies
+      final f1 = freqHz * sqrt(1 + inharmonicityB * 1);
+      final f2 = 2.0 * freqHz * sqrt(1 + inharmonicityB * 4);
+      final f3 = 3.0 * freqHz * sqrt(1 + inharmonicityB * 9);
+      final f4 = 4.0 * freqHz * sqrt(1 + inharmonicityB * 16);
+
+      // FM modulator for bell/tine resonance
+      final fmMod = sin(2 * pi * (freqHz * 2.76) * t) * exp(-t * 6.0) * 0.20;
+
+      final body = sin(2 * pi * f1 * t + fmMod) * decay1 * 0.65 +
+          sin(2 * pi * f2 * t) * decay2 * 0.22 +
+          sin(2 * pi * f3 * t) * decay3 * 0.10 +
+          sin(2 * pi * f4 * t) * decay4 * 0.03 +
+          hammerNoise;
+
+      final sampleL = body * gainL;
+      final sampleR = body * gainR;
+
+      final valL = (sampleL * 4200).toInt().clamp(-32768, 32767);
+      final valR = (sampleR * 4200).toInt().clamp(-32768, 32767);
 
       bd.setInt16(offset, valL, Endian.little);
       bd.setInt16(offset + 2, valR, Endian.little);
@@ -182,7 +213,7 @@ class SyntheticAudio {
     return bytes;
   }
 
-  /// Generates a warm, tranquil chime/piano bell with exponential decay.
+  /// Generates a warm, tranquil chime/piano bell with physical modeling.
   static String createTranquilChimeWavUri({
     double freqHz = 523.25,
     double durationSeconds = 2.5,
