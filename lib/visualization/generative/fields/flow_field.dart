@@ -8,13 +8,13 @@ import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 ///
 /// Nearby spatial positions produce related directions for coherent flow.
 class FlowField {
-  final double baseAngle;
-  final double angleRange;
 
   const FlowField({
     this.baseAngle = 0.0,
     this.angleRange = math.pi * 2.0,
   });
+  final double baseAngle;
+  final double angleRange;
 
   /// Evaluates angle in radians at (x, y) given current time and parameters.
   double getAngle(

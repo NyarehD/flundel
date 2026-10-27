@@ -6,21 +6,46 @@ part 'soundscape_config.g.dart';
 
 @freezed
 @HiveType(typeId: 0)
-abstract class SoundscapeConfig with _$SoundscapeConfig {
-  const factory SoundscapeConfig({
-    @HiveField(0) @Default(0.5) double intensity,
-    @HiveField(1) @Default(0.5) double warmth,
-    @HiveField(2) @Default(0.5) double complexity,
-    @HiveField(3) @Default(0.3) double piano,
-    @HiveField(4) @Default(0.5) double noise,
-    @HiveField(5) @Default(0.4) double pad,
-    @HiveField(6) @Default(0.2) double nature,
-    @HiveField(7) @Default(0.2) double binaural,
-    @HiveField(8) @Default(0.0) double beats,
-    @HiveField(9) @Default(0.0) double bass,
-    @HiveField(10) @Default(72) int beatsBpm,
-  }) = _SoundscapeConfig;
+@JsonSerializable()
+class SoundscapeConfig with _$SoundscapeConfig {
+  const SoundscapeConfig({
+    @HiveField(0) this.intensity = 0.5,
+    @HiveField(1) this.warmth = 0.5,
+    @HiveField(2) this.complexity = 0.5,
+    @HiveField(3) this.piano = 0.3,
+    @HiveField(4) this.noise = 0.5,
+    @HiveField(5) this.pad = 0.4,
+    @HiveField(6) this.nature = 0.2,
+    @HiveField(7) this.binaural = 0.2,
+    @HiveField(8) this.beats = 0.0,
+    @HiveField(9) this.bass = 0.0,
+    @HiveField(10) this.beatsBpm = 72,
+    @HiveField(11) this.wind = 0.0,
+    @HiveField(12) this.water = 0.0,
+    @HiveField(13) this.birds = 0.0,
+    @HiveField(14) this.chimes = 0.0,
+    @HiveField(15) this.gentlePulses = false,
+  });
+
+  final double intensity;
+  final double warmth;
+  final double complexity;
+  final double piano;
+  final double noise;
+  final double pad;
+  final double nature;
+  final double binaural;
+  final double beats;
+  final double bass;
+  final int beatsBpm;
+  final double wind;
+  final double water;
+  final double birds;
+  final double chimes;
+  final bool gentlePulses;
 
   factory SoundscapeConfig.fromJson(Map<String, dynamic> json) =>
       _$SoundscapeConfigFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SoundscapeConfigToJson(this);
 }

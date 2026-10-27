@@ -3,10 +3,6 @@ import 'dart:math';
 enum ChordType { am7, cMaj7, fMaj7, em7, dMaj7, am9, cMaj9, fMaj7Sharp11 }
 
 class ChordInfo {
-  final ChordType type;
-  final String name;
-  final List<double> chordFrequencies;
-  final List<double> passingFrequencies;
 
   const ChordInfo({
     required this.type,
@@ -14,6 +10,10 @@ class ChordInfo {
     required this.chordFrequencies,
     required this.passingFrequencies,
   });
+  final ChordType type;
+  final String name;
+  final List<double> chordFrequencies;
+  final List<double> passingFrequencies;
 }
 
 class HarmonyController {
@@ -136,7 +136,6 @@ class HarmonyController {
           ChordType.em7: 0.15,
           ChordType.fMaj7Sharp11: 0.10,
         };
-        break;
       case ChordType.cMaj7:
       case ChordType.cMaj9:
         transitions = {
@@ -145,7 +144,6 @@ class HarmonyController {
           ChordType.fMaj7: 0.25,
           ChordType.dMaj7: 0.20,
         };
-        break;
       case ChordType.fMaj7:
       case ChordType.fMaj7Sharp11:
         transitions = {
@@ -154,14 +152,12 @@ class HarmonyController {
           ChordType.am7: 0.20,
           ChordType.dMaj7: 0.20,
         };
-        break;
       case ChordType.em7:
         transitions = {
           ChordType.am7: 0.40,
           ChordType.am9: 0.30,
           ChordType.cMaj7: 0.30,
         };
-        break;
       case ChordType.dMaj7:
         transitions = {
           ChordType.fMaj7: 0.35,
@@ -169,7 +165,6 @@ class HarmonyController {
           ChordType.cMaj9: 0.20,
           ChordType.em7: 0.10,
         };
-        break;
     }
 
     final roll = random.nextDouble();

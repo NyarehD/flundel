@@ -1,8 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/audio/audio_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
@@ -12,18 +9,15 @@ import 'package:flundel/visualization/generative/engine/visual_state.dart';
 import 'package:flundel/visualization/generative/painters/generative_visual_painter.dart';
 import 'package:flundel/visualization/generative/profiles/focus_visual_profile.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Reusable Generative Visual Engine Widget.
 ///
 /// Continuously renders calm, abstract, non-repeating procedural visual patterns
 /// synchronized with soundscape states.
 class GenerativeSoundVisual extends ConsumerStatefulWidget {
-  final VisualProfile profile;
-  final GenerativeVisualSeed? seed;
-  final GenerativeVisualQuality quality;
-  final VisualParameters? overrideParameters;
-  final bool animate;
-  final bool enableAudioState;
 
   const GenerativeSoundVisual({
     super.key,
@@ -34,6 +28,12 @@ class GenerativeSoundVisual extends ConsumerStatefulWidget {
     this.animate = true,
     this.enableAudioState = true,
   });
+  final VisualProfile profile;
+  final GenerativeVisualSeed? seed;
+  final GenerativeVisualQuality quality;
+  final VisualParameters? overrideParameters;
+  final bool animate;
+  final bool enableAudioState;
 
   @override
   ConsumerState<GenerativeSoundVisual> createState() =>

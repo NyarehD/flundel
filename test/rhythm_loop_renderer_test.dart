@@ -52,6 +52,33 @@ void main() {
       }
     });
 
+    test('drum RMS reaches its target without exceeding the peak ceiling', () {
+      final peakCeiling = pow(10, -6 / 20) + 1 / 32768;
+      for (final bpm in [68, 72, 76, 84]) {
+        for (final seed in [3, 17, 42]) {
+          final drums = _samples(
+            RhythmLoopRenderer.render(bpm: bpm, seed: seed).drumsWav,
+          );
+          final rms = sqrt(
+            drums.fold<double>(0, (sum, value) => sum + value * value) /
+                drums.length,
+          );
+          final peak = drums.map((value) => value.abs()).reduce(max);
+          final rmsDb = 20 * log(rms) / ln10;
+          expect(
+            rmsDb,
+            closeTo(-22, 0.18),
+            reason: 'drums at $bpm BPM, seed $seed',
+          );
+          expect(
+            peak,
+            lessThanOrEqualTo(peakCeiling),
+            reason: 'drum peak at $bpm BPM, seed $seed',
+          );
+        }
+      }
+    });
+
     test('chord stems share onsets and render the configured bass roots', () {
       final bank = RhythmLoopRenderer.render(bpm: 72, seed: 3);
       const roots = <ChordType, double>{
@@ -131,7 +158,7 @@ double _dominantFrequency(List<double> samples, int sr, double seconds) {
     final magnitude = re * re + im * im;
     if (magnitude > bestMagnitude) {
       bestMagnitude = magnitude;
-      bestFrequency = hz.toDouble();
+      bestFrequency = hz;
     }
   }
   return bestFrequency;

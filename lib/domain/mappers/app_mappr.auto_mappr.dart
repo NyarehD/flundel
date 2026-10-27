@@ -220,9 +220,8 @@ class $AppMappr implements _i1.AutoMapprInterface {
         return null;
       }
       return (_map__i2$CustomPresetDto_To__i3$SoundscapePreset(
-            (model as _i2.CustomPresetDto?),
-          )
-          as TARGET);
+        (model as _i2.CustomPresetDto?),
+      ) as TARGET);
     }
     throw Exception('No ${model.runtimeType} -> $targetTypeOf mapping.');
   }

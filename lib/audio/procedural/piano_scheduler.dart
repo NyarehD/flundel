@@ -1,16 +1,17 @@
 import 'dart:math';
+
 import 'package:flundel/audio/procedural/harmony_controller.dart';
 
 class PianoNoteEvent {
-  final double frequencyHz;
-  final double velocity;
-  final double durationSeconds;
 
   const PianoNoteEvent({
     required this.frequencyHz,
     required this.velocity,
     required this.durationSeconds,
   });
+  final double frequencyHz;
+  final double velocity;
+  final double durationSeconds;
 }
 
 class PianoScheduler {
@@ -54,7 +55,8 @@ class PianoScheduler {
       // Calculate next gap interval: Deep focus -> sparse (4s - 14s), Settling -> active (2s - 6s)
       final minGap = 2.0 + (focusDepth * 4.0) / max(0.1, pianoLevel);
       final maxGap = 5.0 + (focusDepth * 10.0) / max(0.1, pianoLevel);
-      _nextScheduledGapSeconds = minGap + random.nextDouble() * (maxGap - minGap);
+      _nextScheduledGapSeconds =
+          minGap + random.nextDouble() * (maxGap - minGap);
       return true;
     }
 
@@ -74,12 +76,21 @@ class PianoScheduler {
     final chord = harmonyController.currentChord;
     final useChordTone = random.nextDouble() < 0.85;
 
-    final candidates = useChordTone ? chord.chordFrequencies : chord.passingFrequencies;
+    final candidates = useChordTone
+        ? chord.chordFrequencies
+        : chord.passingFrequencies;
 
     // Filter candidates to avoid large interval jumps (> 1.5 octaves) and repeated identical notes
     double chosenFreq = candidates[random.nextInt(candidates.length)];
-    if ((chosenFreq / _lastFrequencyHz - 1.0).abs() > 0.8 && candidates.length > 1) {
-      final alternate = candidates.where((f) => (f - _lastFrequencyHz).abs() < (chosenFreq - _lastFrequencyHz).abs()).toList();
+    if ((chosenFreq / _lastFrequencyHz - 1.0).abs() > 0.8 &&
+        candidates.length > 1) {
+      final alternate = candidates
+          .where(
+            (f) =>
+                (f - _lastFrequencyHz).abs() <
+                (chosenFreq - _lastFrequencyHz).abs(),
+          )
+          .toList();
       if (alternate.isNotEmpty) {
         chosenFreq = alternate[random.nextInt(alternate.length)];
       }
@@ -87,13 +98,18 @@ class PianoScheduler {
 
     // Octave shift variation (subtle)
     if (random.nextDouble() < 0.2) {
-      chosenFreq *= (random.nextBool() ? 1.5 : 0.75); // Perfect fifth or octave transition
+      chosenFreq *= (random.nextBool()
+          ? 1.5
+          : 0.75); // Perfect fifth or octave transition
     }
 
     _lastFrequencyHz = chosenFreq;
 
     // Velocity jitter (low & soft for focus soundscape: 0.20 - 0.38)
-    final velocity = (0.20 + random.nextDouble() * 0.15 * pianoLevel).clamp(0.10, 0.45);
+    final velocity = (0.20 + random.nextDouble() * 0.15 * pianoLevel).clamp(
+      0.10,
+      0.45,
+    );
     final duration = 2.0 + random.nextDouble() * 2.5;
 
     return PianoNoteEvent(

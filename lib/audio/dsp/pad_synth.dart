@@ -1,14 +1,27 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
 /// Warm, analog-inspired multi-harmonic additive pad synth with dynamic low-pass filtering.
 class PadSynth {
-  final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
-  final SmoothedValue detuneCents = SmoothedValue(2.0, smoothingDurationSeconds: 0.5);
-  final SmoothedValue cutoffHz = SmoothedValue(1200.0, smoothingDurationSeconds: 0.5);
-  final SmoothedValue reverbSend = SmoothedValue(0.4, smoothingDurationSeconds: 0.3);
+  final SmoothedValue volume = SmoothedValue(
+    0.0,
+    smoothingDurationSeconds: 0.2,
+  );
+  final SmoothedValue detuneCents = SmoothedValue(
+    2.0,
+    smoothingDurationSeconds: 0.5,
+  );
+  final SmoothedValue cutoffHz = SmoothedValue(
+    1200.0,
+    smoothingDurationSeconds: 0.5,
+  );
+  final SmoothedValue reverbSend = SmoothedValue(
+    0.4,
+    smoothingDurationSeconds: 0.3,
+  );
 
   bool isMuted = false;
   bool isSolo = false;
@@ -25,105 +38,92 @@ class PadSynth {
     cutoffHz.setTarget(cutoffFrequencyHz);
   }
 
-  /// Helper for soft triangle wave folding (warm analog character).
-  static double _triWave(double phase) {
-    return (2.0 / pi) * asin(sin(phase));
-  }
-
-  /// Generates multi-oscillator chord pad WAV bytes with warm harmonics and low-pass filtering.
+  /// Periodic additive voices: every carrier and modulation completes a whole
+  /// number of cycles. The loop has no fade-to-silence or filter startup seam.
+  /// Shared center voices keep the stereo image stable when summed to mono.
   Uint8List generatePadWavBytes({
     required List<double> baseFrequencies,
-    double durationSeconds = 4.0,
+    double durationSeconds = 24.0,
     int sampleRate = 48000,
     double gainMultiplier = 1.0,
   }) {
-    final numSamples = (sampleRate * durationSeconds).toInt();
-    final dataSize = numSamples * 4; // Stereo 16-bit
-    final fileSize = 36 + dataSize;
-
-    final bytes = Uint8List(44 + dataSize);
-    final bd = ByteData.sublistView(bytes);
-
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
-
-    final fadeSamples = (sampleRate * 0.25).toInt();
-    int offset = 44;
-
-    final detuneRatioL = 1.0 - (detuneCents.value * 0.0003);
-    final detuneRatioR = 1.0 + (detuneCents.value * 0.0003);
-
-    // State-variable low-pass filter states
-    double lpfL = 0.0;
-    double lpfR = 0.0;
-    final currentCutoff = cutoffHz.value.clamp(200.0, 4000.0);
-    final rc = 1.0 / (2 * pi * currentCutoff);
-    final dt = 1.0 / sampleRate;
-    final alpha = dt / (rc + dt);
-
-    for (int i = 0; i < numSamples; i++) {
-      final t = i / sampleRate;
-
-      double sampleL = 0.0;
-      double sampleR = 0.0;
-
-      // 1. Sub-bass oscillator based on fundamental frequency
-      if (baseFrequencies.isNotEmpty) {
-        final subFreq = baseFrequencies.first * 0.5;
-        final subWave = sin(2 * pi * subFreq * t);
-        sampleL += subWave * 0.18;
-        sampleR += subWave * 0.18;
-      }
-
-      // 2. Multi-harmonic additive voices per chord note
-      for (int k = 0; k < baseFrequencies.length; k++) {
-        final f = baseFrequencies[k];
-        final lMod = sin(2 * pi * 0.12 * t + k);
-        final rMod = cos(2 * pi * 0.15 * t + k * 1.3);
-
-        // Fundamental (sine + soft triangle blend)
-        final pL = 2 * pi * (f * detuneRatioL) * t;
-        final pR = 2 * pi * (f * detuneRatioR) * t;
-
-        final fundamentalL = (sin(pL) * 0.75 + _triWave(pL) * 0.25) * (0.22 + 0.03 * lMod);
-        final fundamentalR = (sin(pR) * 0.75 + _triWave(pR) * 0.25) * (0.22 + 0.03 * rMod);
-
-        // 2nd Harmonic (Octave above)
-        final harm2L = sin(2 * pL) * 0.08;
-        final harm2R = sin(2 * pR) * 0.08;
-
-        // 3rd Harmonic (Fifth above octave)
-        final harm3L = sin(3 * pL) * 0.04;
-        final harm3R = sin(3 * pR) * 0.04;
-
-        // 5th Harmonic (Warm overtone)
-        final harm5L = sin(5 * pL) * 0.015;
-        final harm5R = sin(5 * pR) * 0.015;
-
-        sampleL += fundamentalL + harm2L + harm3L + harm5L;
-        sampleR += fundamentalR + harm2R + harm3R + harm5R;
-      }
-
-      // 3. Low-pass filtering to remove digital harshness
-      lpfL += alpha * (sampleL - lpfL);
-      lpfR += alpha * (sampleR - lpfR);
-
-      // Loop crossfade envelope
-      double loopFade = 1.0;
-      if (i < fadeSamples) {
-        loopFade = 0.5 * (1 - cos(pi * i / fadeSamples));
-      } else if (i > numSamples - fadeSamples) {
-        loopFade = 0.5 * (1 - cos(pi * (numSamples - i) / fadeSamples));
-      }
-
-      final gain = 2400.0 * gainMultiplier * loopFade;
-      final valL = (lpfL * gain).toInt().clamp(-32768, 32767);
-      final valR = (lpfR * gain).toInt().clamp(-32768, 32767);
-
-      bd.setInt16(offset, valL, Endian.little);
-      bd.setInt16(offset + 2, valR, Endian.little);
-      offset += 4;
+    if (!durationSeconds.isFinite ||
+        durationSeconds <= 0 ||
+        sampleRate < 8000 ||
+        !gainMultiplier.isFinite ||
+        gainMultiplier < 0 ||
+        baseFrequencies.any(
+          (f) => !f.isFinite || f <= 0 || f >= sampleRate / 2,
+        )) {
+      throw ArgumentError(
+        'Expected positive duration, valid frequencies and gain',
+      );
     }
-
+    final frames = (sampleRate * durationSeconds).round();
+    if (frames < 2) throw ArgumentError('Pad needs at least two frames');
+    final duration = frames / sampleRate;
+    final bytes = Uint8List(44 + frames * 4);
+    final data = ByteData.sublistView(bytes);
+    _writeWavHeader(
+      data,
+      bytes,
+      bytes.length - 8,
+      frames * 4,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
+    final detune = pow(2, detuneCents.value.clamp(0.0, 12.0) / 1200);
+    final cutoff = cutoffHz.value.clamp(200.0, 4000.0);
+    final voices = <(int, int, int, double, double)>[];
+    for (var note = 0; note < baseFrequencies.length; note++) {
+      final frequency = baseFrequencies[note];
+      for (final harmonic in [1, 2, 3, 5]) {
+        final hz = frequency * harmonic;
+        if (hz * detune >= sampleRate * 0.45) continue;
+        final amplitude = switch (harmonic) {
+          1 => 0.75,
+          2 => 0.14,
+          3 => 0.055,
+          _ => 0.012,
+        };
+        // A smooth spectral rolloff without a transient filter state.
+        final gain = amplitude / sqrt(1 + pow(hz / cutoff, 4));
+        voices.add((
+          (hz * duration).round(),
+          (hz / detune * duration).round(),
+          (hz * detune * duration).round(),
+          gain,
+          note * 1.71,
+        ));
+      }
+    }
+    final normalization =
+        3000 * gainMultiplier / sqrt(max(1, baseFrequencies.length));
+    for (var frame = 0; frame < frames; frame++) {
+      final cycle = 2 * pi * frame / frames;
+      var left = 0.0;
+      var right = 0.0;
+      for (final voice in voices) {
+        final (center, low, high, gain, phase) = voice;
+        final breath = 0.88 + 0.12 * sin(cycle + phase);
+        final drift = 0.08 * sin(2 * cycle + phase);
+        final middle = sin(center * cycle + phase + drift) * 0.72;
+        left +=
+            (middle + 0.28 * sin(low * cycle + phase + drift)) * gain * breath;
+        right +=
+            (middle + 0.28 * sin(high * cycle + phase + drift)) * gain * breath;
+      }
+      data.setInt16(
+        44 + frame * 4,
+        (left * normalization).round().clamp(-32768, 32767),
+        Endian.little,
+      );
+      data.setInt16(
+        46 + frame * 4,
+        (right * normalization).round().clamp(-32768, 32767),
+        Endian.little,
+      );
+    }
     return bytes;
   }
 

@@ -4,19 +4,19 @@ import 'dart:math';
 ///
 /// Prevents audible clicks and pops caused by instant parameter jumps.
 class SmoothedValue {
+
+  SmoothedValue(
+    double initialValue, {
+    double smoothingDurationSeconds = 0.15, // default 150ms
+  }) : _current = initialValue,
+       _target = initialValue,
+       _startValue = initialValue,
+       _smoothingDuration = max(0.001, smoothingDurationSeconds);
   double _current;
   double _target;
   double _smoothingDuration; // in seconds
   double _elapsed = 0.0;
   double _startValue;
-
-  SmoothedValue(
-    double initialValue, {
-    double smoothingDurationSeconds = 0.15, // default 150ms
-  })  : _current = initialValue,
-        _target = initialValue,
-        _startValue = initialValue,
-        _smoothingDuration = max(0.001, smoothingDurationSeconds);
 
   double get value => _current;
   double get target => _target;

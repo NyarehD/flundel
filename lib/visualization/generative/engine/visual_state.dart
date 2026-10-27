@@ -8,12 +8,6 @@ import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 /// Decouples visual rendering from raw PCM audio samples and provides
 /// high-level soundscape attributes.
 class AudioVisualState {
-  final double intensity;
-  final double rhythm;
-  final double density;
-  final double brightness;
-  final double movement;
-  final double complexity;
 
   const AudioVisualState({
     this.intensity = 0.5,
@@ -34,6 +28,12 @@ class AudioVisualState {
       complexity: _unit(1.0 - analysis.focusDepth * 0.4),
     );
   }
+  final double intensity;
+  final double rhythm;
+  final double density;
+  final double brightness;
+  final double movement;
+  final double complexity;
 
   static double _unit(double value) =>
       value.isFinite ? value.clamp(0.0, 1.0) : 0.0;

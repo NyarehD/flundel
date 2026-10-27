@@ -1,22 +1,30 @@
 import 'dart:async';
 import 'dart:math' show max;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vibration/vibration.dart';
+import 'package:flundel/audio/audio_engine.dart';
+import 'package:flundel/audio/audio_session_context.dart';
+import 'package:flundel/audio/flundel_audio_handler.dart';
 import 'package:flundel/domain/models/focus_session.dart';
 import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:flundel/domain/models/soundscape_preset.dart';
-import 'package:flundel/storage/local_storage.dart';
-import 'package:flundel/audio/audio_engine.dart';
-import 'package:flundel/audio/flundel_audio_handler.dart';
 import 'package:flundel/session/session_phase.dart';
 import 'package:flundel/session/session_state.dart';
+import 'package:flundel/storage/local_storage.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vibration/vibration.dart';
 
 final sessionViewModelProvider =
     NotifierProvider<SessionViewModel, SessionState>(SessionViewModel.new);
 
 class SessionViewModel extends Notifier<SessionState> {
   Timer? _timer;
+  AppLifecycleListener? _appLifecycle;
+  Map<String, dynamic>? _audioCheckpoint;
+  int _lastCheckpointSecond = 0;
+  Future<void> _storageTail = Future.value();
+  bool _checkpointPending = false;
+  bool _restoreNeedsRetry = false;
   LocalStorageRepository? _storageRepository;
   AudioEngine? _engine;
   bool _disposed = false;
@@ -48,9 +56,22 @@ class SessionViewModel extends Notifier<SessionState> {
   @override
   SessionState build() {
     _disposed = false;
+    _appLifecycle = AppLifecycleListener(
+      onInactive: () {
+        if (state.isActive) unawaited(_checkpointSession());
+      },
+      onPause: () {
+        if (state.isActive) unawaited(_checkpointSession());
+      },
+    );
     ref.onDispose(() {
       _disposed = true;
       _timer?.cancel();
+      _appLifecycle?.dispose();
+      _engine?.setExternalPlaybackHandlers();
+      flundelAudioHandler?.onPlay = null;
+      flundelAudioHandler?.onPause = null;
+      flundelAudioHandler?.onStop = null;
       _pendingConfig = null;
       for (final waiter in _configWaiters) {
         if (!waiter.completer.isCompleted) waiter.completer.complete(false);
@@ -61,17 +82,29 @@ class SessionViewModel extends Notifier<SessionState> {
     final activeJson = _storage.getActiveSession();
     if (activeJson != null) {
       try {
-        final session = FocusSession.fromJson(activeJson);
+        final saved = FocusSession.fromJson(activeJson);
         final now = DateTime.now();
-        final pausedNow = session.pausedAt == null
-            ? 0
-            : now.difference(session.pausedAt!).inSeconds;
-        final elapsed = max(
-          0,
-          now.difference(session.startedAt).inSeconds -
-              session.totalPausedSeconds -
-              pausedNow,
-        ).toInt();
+        _audioCheckpoint = activeJson['audioCheckpoint'] is Map
+            ? Map<String, dynamic>.from(activeJson['audioCheckpoint'] as Map)
+            : null;
+        final frames =
+            (_audioCheckpoint?['frame'] as num?)?.toInt() ??
+            (activeJson['elapsedFrames'] as num?)?.toInt() ??
+            (saved.pausedAt == null
+                ? 0
+                : max(
+                        0,
+                        saved.pausedAt!.difference(saved.startedAt).inSeconds -
+                            saved.totalPausedSeconds,
+                      ) *
+                      48000);
+        final elapsed = frames ~/ 48000;
+        final session = saved.copyWith(
+          pausedAt: now,
+          startedAt: now.subtract(Duration(seconds: elapsed)),
+          totalPausedSeconds: 0,
+        );
+        _lastCheckpointSecond = elapsed;
 
         if (session.durationSeconds == null ||
             elapsed < session.durationSeconds!) {
@@ -82,7 +115,6 @@ class SessionViewModel extends Notifier<SessionState> {
           _sessionEpoch++;
           _committedConfig = session.preset.config;
           _requestedConfig = session.preset.config;
-          if (session.pausedAt == null) _startTimer();
           final selectedPreset = SoundscapePreset.builtInPresets.firstWhere(
             (preset) => preset.id == session.preset.id,
             orElse: () => session.preset,
@@ -90,7 +122,7 @@ class SessionViewModel extends Notifier<SessionState> {
 
           final restoredState = SessionState(
             isActive: true,
-            isPaused: session.pausedAt != null,
+            isPaused: true,
             currentSession: session,
             elapsedSeconds: elapsed,
             remainingSeconds: session.durationSeconds != null
@@ -106,13 +138,17 @@ class SessionViewModel extends Notifier<SessionState> {
             completionCueEnabled: session.completionCueEnabled,
           );
           _bindMediaHandler(restoredState);
-          unawaited(_restoreAudioSession(session, initialPhase));
+          unawaited(
+            _serializeLifecycle(
+              () => _restoreAudioSession(session, initialPhase),
+            ),
+          );
           return restoredState;
         } else {
-          _storage.clearActiveSession();
+          unawaited(_storage.clearActiveSession());
         }
-      } catch (_) {
-        _storage.clearActiveSession();
+      } on Object {
+        unawaited(_storage.clearActiveSession());
       }
     }
 
@@ -129,18 +165,18 @@ class SessionViewModel extends Notifier<SessionState> {
 
   void selectPreset(SoundscapePreset preset) {
     if (state.isActive) return;
-    _storage.setLastPresetId(preset.id);
+    unawaited(_storage.setLastPresetId(preset.id));
     state = state.copyWith(selectedPreset: preset);
   }
 
   void selectDuration(int? durationSeconds) {
     if (state.isActive) return;
-    _storage.setLastDurationSeconds(durationSeconds);
+    unawaited(_storage.setLastDurationSeconds(durationSeconds));
     state = state.copyWith(selectedDurationSeconds: durationSeconds);
   }
 
   void togglePomodoro(bool enabled) {
-    _storage.setPomodoroEnabled(enabled);
+    unawaited(_storage.setPomodoroEnabled(enabled));
     state = state.copyWith(pomodoroEnabled: enabled);
   }
 
@@ -153,7 +189,7 @@ class SessionViewModel extends Notifier<SessionState> {
         if (_disposed || epoch != _sessionEpoch) return;
         if (session != null && state.currentSession?.id == session.id) {
           final updated = session.copyWith(completionCueEnabled: enabled);
-          await _storage.saveActiveSession(updated.toJson());
+          await _saveSessionJson(_sessionJson(updated));
           if (!_disposed &&
               epoch == _sessionEpoch &&
               state.currentSession?.id == session.id) {
@@ -173,6 +209,9 @@ class SessionViewModel extends Notifier<SessionState> {
     if (state.isLoading) return;
     state = state.copyWith(isLoading: true, isPaused: false);
     final epoch = ++_sessionEpoch;
+    _audioCheckpoint = null;
+    _restoreNeedsRetry = false;
+    _lastCheckpointSecond = 0;
 
     final sessionSeed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
     final session = FocusSession(
@@ -186,13 +225,14 @@ class SessionViewModel extends Notifier<SessionState> {
     );
 
     try {
-      await _storage.saveActiveSession(session.toJson());
+      await _saveSessionJson(_sessionJson(session));
       await _audioEngine.start(
         session.preset.config,
         sessionSeed: session.sessionSeed,
+        context: _audioContext(session),
       );
       if (_disposed || epoch != _sessionEpoch) return;
-    } catch (_) {
+    } on Object {
       await _storage.clearActiveSession();
       if (!_disposed && epoch == _sessionEpoch) {
         state = state.copyWith(
@@ -205,19 +245,17 @@ class SessionViewModel extends Notifier<SessionState> {
     }
     _committedConfig = session.preset.config;
     _requestedConfig = session.preset.config;
-    await _audioEngine.setFocusDepth(
-      _focusDepthForPhase(SessionPhase.settling),
-    );
+    await _audioEngine.updateSessionContext(_audioContext(session));
 
     try {
-      Vibration.hasVibrator()
-          .then((hasVibrator) {
-            if (hasVibrator == true) {
-              Vibration.vibrate(duration: 50).catchError((_) {});
-            }
-          })
-          .catchError((_) {});
-    } catch (_) {}
+      unawaited(
+        Vibration.hasVibrator()
+            .then((hasVibrator) async {
+              if (hasVibrator) await Vibration.vibrate(duration: 50);
+            })
+            .catchError((Object _) {}),
+      );
+    } on Object {}
 
     state = state.copyWith(
       isActive: true,
@@ -304,7 +342,7 @@ class SessionViewModel extends Notifier<SessionState> {
           if (committedConfig != null) {
             try {
               await _audioEngine.updateConfig(committedConfig);
-            } catch (_) {}
+            } on Object {}
           }
           _completeConfigWaiters(revision, false);
           return;
@@ -320,7 +358,7 @@ class SessionViewModel extends Notifier<SessionState> {
 
         final updatedPreset = session.preset.copyWith(config: config);
         final updatedSession = session.copyWith(preset: updatedPreset);
-        await _storage.saveActiveSession(updatedSession.toJson());
+        await _saveSessionJson(_sessionJson(updatedSession));
         if (!state.isActive ||
             sessionId != state.currentSession?.id ||
             epoch != _sessionEpoch) {
@@ -334,14 +372,14 @@ class SessionViewModel extends Notifier<SessionState> {
         _committedConfig = config;
         state = state.copyWith(currentSession: updatedSession);
         _completeConfigWaiters(revision, true);
-      } catch (_) {
+      } on Object {
         // If persistence failed after the engine accepted the new config, put
         // the engine back on the last durable configuration where possible.
         final committedConfig = _committedConfig;
         if (committedConfig != null) {
           try {
             await _audioEngine.updateConfig(committedConfig);
-          } catch (_) {
+          } on Object {
             // The UI and restored session still retain the last durable value.
           }
         }
@@ -376,17 +414,16 @@ class SessionViewModel extends Notifier<SessionState> {
     }
 
     final session = state.currentSession!;
-    final newElapsed = max(
-      0,
-      DateTime.now().difference(session.startedAt).inSeconds -
-          session.totalPausedSeconds,
-    );
+    final newElapsed = _audioEngine.playbackSnapshot.position.inSeconds;
+    if (newElapsed - _lastCheckpointSecond >= 4) {
+      unawaited(_checkpointSession());
+    }
     final totalDuration = state.selectedDurationSeconds;
 
     if (totalDuration != null) {
       final newRemaining = totalDuration - newElapsed;
       if (newRemaining <= 0) {
-        completeSession();
+        unawaited(completeSession());
         return;
       }
 
@@ -396,7 +433,11 @@ class SessionViewModel extends Notifier<SessionState> {
       );
 
       if (newPhase != state.phase) {
-        _audioEngine.setFocusDepth(_focusDepthForPhase(newPhase));
+        unawaited(
+          _audioEngine.updateSessionContext(
+            _audioContext(session, elapsed: newElapsed, phase: newPhase),
+          ),
+        );
       }
 
       state = state.copyWith(
@@ -412,7 +453,11 @@ class SessionViewModel extends Notifier<SessionState> {
       );
 
       if (newPhase != state.phase) {
-        _audioEngine.setFocusDepth(_focusDepthForPhase(newPhase));
+        unawaited(
+          _audioEngine.updateSessionContext(
+            _audioContext(session, elapsed: newElapsed, phase: newPhase),
+          ),
+        );
       }
 
       state = state.copyWith(
@@ -423,18 +468,56 @@ class SessionViewModel extends Notifier<SessionState> {
     }
   }
 
-  double _focusDepthForPhase(SessionPhase phase) {
-    switch (phase) {
-      case SessionPhase.settling:
-        return 0.30;
-      case SessionPhase.enteringFocus:
-        return 0.65;
-      case SessionPhase.deepFocus:
-        return 0.85;
-      case SessionPhase.windDown:
-        return 0.50;
-      case SessionPhase.completion:
-        return 0.0;
+  AudioSessionContext _audioContext(
+    FocusSession session, {
+    int? elapsed,
+    SessionPhase? phase,
+  }) => AudioSessionContext(
+    presetId: session.preset.id,
+    elapsed: Duration(seconds: elapsed ?? state.elapsedSeconds),
+    duration: session.durationSeconds == null
+        ? null
+        : Duration(seconds: session.durationSeconds!),
+    phase: phase ?? state.phase,
+  );
+
+  Map<String, dynamic> _sessionJson(FocusSession session) => {
+    ...session.toJson(),
+    'audioCheckpoint': _audioCheckpoint,
+    'elapsedFrames': _audioCheckpoint?['frame'] ?? state.elapsedSeconds * 48000,
+  };
+
+  Future<void> _saveSessionJson(Map<String, dynamic> json) {
+    final work = _storageTail.then((_) => _storage.saveActiveSession(json));
+    _storageTail = work.catchError((Object _) {});
+    return work;
+  }
+
+  Future<void> _checkpointSession() async {
+    if (_checkpointPending || _disposed || !state.isActive || state.isLoading) {
+      return;
+    }
+    _checkpointPending = true;
+    try {
+      await _serializeLifecycle(() async {
+        final epoch = _sessionEpoch;
+        final checkpoint = await _audioEngine.captureCheckpoint();
+        await _configDrain;
+        final session = state.currentSession;
+        if (_disposed ||
+            epoch != _sessionEpoch ||
+            session == null ||
+            !state.isActive) {
+          return;
+        }
+        _audioCheckpoint = checkpoint;
+        await _saveSessionJson(_sessionJson(session));
+        _lastCheckpointSecond = (checkpoint['frame'] as int) ~/ 48000;
+      });
+    } on Object {
+      // Retry on the next timer tick; do not claim a checkpoint was durable.
+    } finally {
+      _checkpointPending = false;
     }
   }
 
@@ -456,7 +539,9 @@ class SessionViewModel extends Notifier<SessionState> {
     _pendingConfig = null;
 
     await _audioEngine.stop();
+    await _storageTail;
     await _storage.clearActiveSession();
+    _audioCheckpoint = null;
     flundelAudioHandler?.publishIdle();
     if (_disposed) return;
     _pendingConfig = null;
@@ -486,21 +571,24 @@ class SessionViewModel extends Notifier<SessionState> {
     if (_disposed) return;
 
     try {
-      Vibration.hasVibrator()
-          .then((hasVibrator) {
-            if (hasVibrator == true) {
-              Vibration.vibrate(pattern: [0, 100, 100, 150]).catchError((_) {});
-            }
-          })
-          .catchError((_) {});
-    } catch (_) {}
+      unawaited(
+        Vibration.hasVibrator()
+            .then((hasVibrator) async {
+              if (hasVibrator)
+                await Vibration.vibrate(pattern: [0, 100, 100, 150]);
+            })
+            .catchError((Object _) {}),
+      );
+    } on Object {}
 
     final cueEnabled = state.currentSession?.completionCueEnabled ?? true;
     if (cueEnabled) {
       await _audioEngine.playCompletionCue();
     }
     await _audioEngine.stop();
+    await _storageTail;
     await _storage.clearActiveSession();
+    _audioCheckpoint = null;
     flundelAudioHandler?.publishIdle();
     if (_disposed) return;
     _pendingConfig = null;
@@ -534,7 +622,8 @@ class SessionViewModel extends Notifier<SessionState> {
     final pausedSession = session.copyWith(pausedAt: now);
     try {
       await _audioEngine.pause();
-      await _storage.saveActiveSession(pausedSession.toJson());
+      _audioCheckpoint = await _audioEngine.captureCheckpoint();
+      await _saveSessionJson(_sessionJson(pausedSession));
       _timer?.cancel();
       _timer = null;
       state = state.copyWith(
@@ -543,11 +632,15 @@ class SessionViewModel extends Notifier<SessionState> {
         currentSession: pausedSession,
       );
       flundelAudioHandler?.publish(playing: false);
-    } catch (_) {
-      try {
-        await _audioEngine.resume();
-      } catch (_) {}
-      state = state.copyWith(isLoading: false);
+    } on Object {
+      _timer?.cancel();
+      _timer = null;
+      state = state.copyWith(
+        isPaused: true,
+        isLoading: false,
+        currentSession: pausedSession,
+      );
+      flundelAudioHandler?.publish(playing: false);
     }
   }
 
@@ -570,8 +663,18 @@ class SessionViewModel extends Notifier<SessionState> {
           DateTime.now().difference(pausedAt).inSeconds,
     );
     try {
+      if (_restoreNeedsRetry) {
+        await _audioEngine.start(
+          session.preset.config,
+          sessionSeed: session.sessionSeed,
+          context: _audioContext(session),
+          checkpoint: _audioCheckpoint,
+          startPaused: true,
+        );
+        _restoreNeedsRetry = false;
+      }
       await _audioEngine.resume();
-      await _storage.saveActiveSession(updatedSession.toJson());
+      await _saveSessionJson(_sessionJson(updatedSession));
       state = state.copyWith(
         isPaused: false,
         isLoading: false,
@@ -579,11 +682,11 @@ class SessionViewModel extends Notifier<SessionState> {
       );
       _startTimer();
       flundelAudioHandler?.publish(playing: true);
-    } catch (_) {
+    } on Object {
       try {
         await _audioEngine.pause();
-        await _storage.saveActiveSession(session.toJson());
-      } catch (_) {}
+        await _saveSessionJson(_sessionJson(session));
+      } on Object {}
       state = state.copyWith(isLoading: false);
     }
   }
@@ -610,20 +713,18 @@ class SessionViewModel extends Notifier<SessionState> {
       await _audioEngine.start(
         session.preset.config,
         sessionSeed: session.sessionSeed,
+        context: _audioContext(session, phase: phase),
+        checkpoint: _audioCheckpoint,
+        startPaused: true,
       );
-      await _audioEngine.setFocusDepth(_focusDepthForPhase(phase));
-      if (session.pausedAt != null) await _audioEngine.pause();
-    } catch (_) {
+      await _saveSessionJson(_sessionJson(session));
+    } on Object {
       if (!_disposed &&
           epoch == _sessionEpoch &&
           state.currentSession?.id == session.id) {
-        await _storage.clearActiveSession();
-        state = state.copyWith(
-          isActive: false,
-          isPaused: false,
-          currentSession: null,
-        );
-        flundelAudioHandler?.publishIdle();
+        _restoreNeedsRetry = true;
+        state = state.copyWith(isActive: true, isPaused: true);
+        flundelAudioHandler?.publish(playing: false);
       }
     }
   }
@@ -641,8 +742,7 @@ class SessionViewModel extends Notifier<SessionState> {
 }
 
 class _ConfigWaiter {
+  const _ConfigWaiter(this.revision, this.completer);
   final int revision;
   final Completer<bool> completer;
-
-  const _ConfigWaiter(this.revision, this.completer);
 }

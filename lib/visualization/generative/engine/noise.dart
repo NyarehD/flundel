@@ -5,13 +5,13 @@ import 'dart:typed_data';
 ///
 /// Supports 2D, 3D, and 4D evaluations derived from a deterministic integer seed.
 class GenerativeNoise {
-  final int seed;
-  late final Uint8List _perm;
-  late final Uint8List _permMod12;
 
   GenerativeNoise([this.seed = 42]) {
     _initPermutationTable();
   }
+  final int seed;
+  late final Uint8List _perm;
+  late final Uint8List _permMod12;
 
   void _initPermutationTable() {
     final p = Uint8List(256);
@@ -40,14 +40,16 @@ class GenerativeNoise {
     0, 1, 1, 0, -1, 1, 0, 1, -1, 0, -1, -1,
   ];
 
-  static const _f2 = 0.5 * (1.7320508075688772 - 1.0); // 0.36602540378
-  static const _g2 = (3.0 - 1.7320508075688772) / 6.0; // 0.2113248654
-  static const _f3 = 1.0 / 3.0;
-  static const _g3 = 1.0 / 6.0;
+  static const double _f2 = 0.5 * (1.7320508075688772 - 1.0); // 0.36602540378
+  static const double _g2 = (3.0 - 1.7320508075688772) / 6.0; // 0.2113248654
+  static const double _f3 = 1.0 / 3.0;
+  static const double _g3 = 1.0 / 6.0;
 
   /// 2D Simplex Noise in range [-1.0, 1.0]
   double eval2D(double xin, double yin) {
-    double n0, n1, n2;
+    double n0;
+    double n1;
+    double n2;
     final s = (xin + yin) * _f2;
     final i = (xin + s).floor();
     final j = (yin + s).floor();
@@ -55,7 +57,8 @@ class GenerativeNoise {
     final x0 = xin - (i - t);
     final y0 = yin - (j - t);
 
-    int i1, j1;
+    int i1;
+    int j1;
     if (x0 > y0) {
       i1 = 1;
       j1 = 0;
@@ -104,7 +107,10 @@ class GenerativeNoise {
 
   /// 3D Simplex Noise in range [-1.0, 1.0]
   double eval3D(double xin, double yin, double zin) {
-    double n0, n1, n2, n3;
+    double n0;
+    double n1;
+    double n2;
+    double n3;
     final s = (xin + yin + zin) * _f3;
     final i = (xin + s).floor();
     final j = (yin + s).floor();
@@ -114,8 +120,12 @@ class GenerativeNoise {
     final y0 = yin - (j - t);
     final z0 = zin - (k - t);
 
-    int i1, j1, k1;
-    int i2, j2, k2;
+    int i1;
+    int j1;
+    int k1;
+    int i2;
+    int j2;
+    int k2;
 
     if (x0 >= y0) {
       if (y0 >= z0) {

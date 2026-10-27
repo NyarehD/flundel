@@ -1,28 +1,27 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/audio/audio_engine.dart';
 import 'package:flundel/visualization/painters/soundscape_painter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A low-contrast, audio-reactive pattern. Preview instances never subscribe to
 /// the audio engine; they show only the selected preset's ambient motion.
 class VisualizationWidget extends ConsumerStatefulWidget {
-  final String presetId;
-  final bool preview;
-  final bool isActive;
-  final bool animatePreview;
 
   const VisualizationWidget({
-    super.key,
-    required this.presetId,
+    required this.presetId, super.key,
     this.preview = false,
     this.isActive = true,
     this.animatePreview = false,
   });
+  final String presetId;
+  final bool preview;
+  final bool isActive;
+  final bool animatePreview;
 
   @override
   ConsumerState<VisualizationWidget> createState() =>
@@ -31,6 +30,8 @@ class VisualizationWidget extends ConsumerStatefulWidget {
 
 class _VisualizationWidgetState extends ConsumerState<VisualizationWidget>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+
+  _VisualizationWidgetState() : _enginePlaying = false;
   late final Ticker _ticker;
   late final VisualizationModel _signals;
   StreamSubscription<AudioAnalysis>? _analysisSubscription;
@@ -42,8 +43,6 @@ class _VisualizationWidgetState extends ConsumerState<VisualizationWidget>
   bool _lifecycleResumed = true;
   bool _tickerModeEnabled = true;
   bool _reducedMotion = false;
-
-  _VisualizationWidgetState() : _enginePlaying = false;
 
   @override
   void initState() {

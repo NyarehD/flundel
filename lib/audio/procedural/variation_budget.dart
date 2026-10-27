@@ -1,9 +1,9 @@
 /// Controls simultaneous macro variation transitions to prevent audio distraction.
 class VariationBudget {
-  final int maxSimultaneousTransitions;
-  final Set<String> _activeTransitions = {};
 
   VariationBudget({this.maxSimultaneousTransitions = 2});
+  final int maxSimultaneousTransitions;
+  final Set<String> _activeTransitions = {};
 
   int get activeCount => _activeTransitions.length;
 

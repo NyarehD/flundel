@@ -1,11 +1,22 @@
 import 'dart:math';
+
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
 class AudioBus {
-  final SmoothedValue masterVolume = SmoothedValue(0.9, smoothingDurationSeconds: 0.1);
-  final SmoothedValue tonalBusGain = SmoothedValue(0.8, smoothingDurationSeconds: 0.15);
-  final SmoothedValue textureBusGain = SmoothedValue(0.7, smoothingDurationSeconds: 0.15);
-  final SmoothedValue reverbBusSend = SmoothedValue(0.3, smoothingDurationSeconds: 0.2);
+  final SmoothedValue masterVolume = SmoothedValue(
+    0.9,
+    smoothingDurationSeconds: 0.1,
+  );
+  final SmoothedValue tonalBusGain = SmoothedValue(
+    0.8,
+  );
+  final SmoothedValue textureBusGain = SmoothedValue(
+    0.7,
+  );
+  final SmoothedValue reverbBusSend = SmoothedValue(
+    0.3,
+    smoothingDurationSeconds: 0.2,
+  );
 
   static const double masterLimiterCeiling = 0.89; // -1 dBFS
   static const double preMasterPeakTarget = 0.50; // -6 dBFS

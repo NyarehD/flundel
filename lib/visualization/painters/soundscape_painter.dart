@@ -16,9 +16,6 @@ abstract interface class VisualizationSignals {
 
 /// Repeating monochrome fields with a distinct rhythm for each preset.
 class SoundscapePainter extends CustomPainter {
-  final String presetId;
-  final VisualizationSignals signals;
-  final _PatternGeometry _geometry;
 
   SoundscapePainter({
     required this.presetId,
@@ -26,6 +23,9 @@ class SoundscapePainter extends CustomPainter {
     required Listenable repaint,
   }) : _geometry = _PatternGeometry.forPreset(presetId),
        super(repaint: repaint);
+  final String presetId;
+  final VisualizationSignals signals;
+  final _PatternGeometry _geometry;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -365,7 +365,7 @@ class SoundscapePainter extends CustomPainter {
       }
     }
 
-    final spokes = 20;
+    const spokes = 20;
     final rotation = phase + time * 0.055;
     for (var spoke = 0; spoke < spokes; spoke++) {
       final angle = rotation + spoke * math.pi * 2 / spokes;
@@ -506,8 +506,6 @@ class SoundscapePainter extends CustomPainter {
 }
 
 class _PatternGeometry {
-  static final Map<String, _PatternGeometry> _cache = {};
-  final double phase;
 
   const _PatternGeometry._(this.phase);
 
@@ -527,4 +525,6 @@ class _PatternGeometry {
       _ => 0.12,
     }),
   );
+  static final Map<String, _PatternGeometry> _cache = {};
+  final double phase;
 }

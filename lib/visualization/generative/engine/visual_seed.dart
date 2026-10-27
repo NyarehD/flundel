@@ -4,8 +4,6 @@ import 'package:flundel/visualization/generative/engine/noise.dart';
 
 /// Seed object ensuring reproducible generative patterns across sessions.
 class GenerativeVisualSeed {
-  final int sessionSeed;
-  final int patternSeed;
 
   const GenerativeVisualSeed({
     required this.sessionSeed,
@@ -27,6 +25,8 @@ class GenerativeVisualSeed {
       patternSeed: pattern,
     );
   }
+  final int sessionSeed;
+  final int patternSeed;
 
   int get combinedSeed => (sessionSeed * 31 + patternSeed) & 0x7FFFFFFF;
 

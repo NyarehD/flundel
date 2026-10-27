@@ -3,14 +3,19 @@ import 'dart:math' as math;
 import 'package:flundel/audio/procedural/harmony_controller.dart';
 import 'package:flundel/domain/models/soundscape_config.dart';
 
-/// Shared production gain staging for source-calibrated -24 dBFS bed assets.
+/// User-level gain staging shared by live playback and offline rendering.
+/// Source calibration lives in the stateful renderer, before these controls.
 class AudioMixPolicy {
   static const double textureNoiseGain = 0.22;
   static const double natureGain = 0.28;
-  static const double padGain = 0.90;
+  static const double padGain = 0.82;
   static const double pianoVoiceGain = 0.9;
   static const double beatsGain = 0.66;
   static const double bassGain = 0.72;
+  static const double windGain = 0.52;
+  static const double waterGain = 0.52;
+  static const double birdsGain = 0.42;
+  static const double chimeGain = 0.58;
   static const int maxPianoVoices = 8;
 
   static double noiseLevel(SoundscapeConfig config) =>
@@ -19,6 +24,24 @@ class AudioMixPolicy {
   static double natureLevel(SoundscapeConfig config) =>
       config.nature * natureGain;
 
+  static double windLevel(SoundscapeConfig config) => config.wind * windGain;
+
+  static double waterLevel(SoundscapeConfig config) => config.water * waterGain;
+
+  static double birdsLevel(SoundscapeConfig config) => config.birds * birdsGain;
+
+  static double chimeLevel(SoundscapeConfig config) =>
+      config.chimes * config.intensity * chimeGain;
+
+  static Duration nextChimeDelay({
+    required math.Random random,
+    required SoundscapeConfig config,
+  }) {
+    final minimumSeconds = config.chimes >= 0.3 ? 14 : 19;
+    final rangeSeconds = config.chimes >= 0.3 ? 10 : 14;
+    return Duration(seconds: minimumSeconds + random.nextInt(rangeSeconds + 1));
+  }
+
   static double padLevel(SoundscapeConfig config) => config.pad * padGain;
 
   static double pianoLevel(SoundscapeConfig config) =>
@@ -26,13 +49,22 @@ class AudioMixPolicy {
 
   static double binauralBeatHz(SoundscapeConfig config) {
     if (config.warmth >= 0.85 && config.intensity <= 0.3) return 2.0; // Delta
-    if (config.warmth >= 0.75 || (config.binaural >= 0.5 && config.intensity <= 0.5)) return 6.0; // Theta
-    if (config.complexity >= 0.55 && config.intensity >= 0.55) return 14.0; // Beta
+    if (config.warmth >= 0.75 ||
+        (config.binaural >= 0.5 && config.intensity <= 0.5)) {
+      return 6.0; // Theta
+    }
+    if (config.complexity >= 0.55 && config.intensity >= 0.55) {
+      return 14.0; // Beta
+    }
     return 10.0; // Alpha
   }
 
   static Duration phraseSpacing(math.Random random, SoundscapeConfig config) {
-    final baseMs = config.piano >= 0.65 ? 520 : 650;
+    final baseMs = config.gentlePulses
+        ? 1100
+        : config.piano >= 0.65
+        ? 520
+        : 650;
     final pianoVariation = ((1 - config.piano.clamp(0.0, 1.0)) * 100).round();
     return Duration(milliseconds: baseMs + random.nextInt(pianoVariation + 1));
   }
@@ -44,6 +76,7 @@ class AudioMixPolicy {
   }
 
   static int phraseNoteCount(SoundscapeConfig config) {
+    if (config.gentlePulses) return 2;
     if (config.piano >= 0.65) return 5;
     if (config.piano <= 0.12 && config.noise >= 0.75) return 3;
     return 4;
@@ -90,7 +123,9 @@ class AudioMixPolicy {
     if (firstNote) return Duration(seconds: 2 + random.nextInt(3));
     final complexity = config.complexity.clamp(0.0, 1.0);
     final focus = focusDepth.clamp(0.0, 1.0);
-    final minimum = config.piano <= 0.12 && config.noise >= 0.75
+    final minimum = config.gentlePulses
+        ? 16 + (focus * 8).round()
+        : config.piano <= 0.12 && config.noise >= 0.75
         ? 22 + (focus * 4).round()
         : config.piano >= 0.65
         ? 5 + (focus * 2).round()

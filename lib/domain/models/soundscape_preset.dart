@@ -1,25 +1,30 @@
+import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive/hive.dart';
-import 'package:flundel/domain/models/soundscape_config.dart';
 
 part 'soundscape_preset.freezed.dart';
 part 'soundscape_preset.g.dart';
 
 @freezed
 @HiveType(typeId: 1)
-abstract class SoundscapePreset with _$SoundscapePreset {
-  // json_serializable applies nested toJson calls through Freezed's factory.
-  // ignore: invalid_annotation_target
-  @JsonSerializable(explicitToJson: true)
-  const factory SoundscapePreset({
-    @HiveField(0) required String id,
-    @HiveField(1) required String name,
-    @HiveField(2) required SoundscapeConfig config,
-    @HiveField(3) @Default('particles_waves') String visualPreset,
-  }) = _SoundscapePreset;
+@JsonSerializable(explicitToJson: true)
+class SoundscapePreset with _$SoundscapePreset {
+  const SoundscapePreset({
+    @HiveField(0) required this.id,
+    @HiveField(1) required this.name,
+    @HiveField(2) required this.config,
+    @HiveField(3) this.visualPreset = 'particles_waves',
+  });
+
+  final String id;
+  final String name;
+  final SoundscapeConfig config;
+  final String visualPreset;
 
   factory SoundscapePreset.fromJson(Map<String, dynamic> json) =>
       _$SoundscapePresetFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SoundscapePresetToJson(this);
 
   static List<SoundscapePreset> get builtInPresets => const [
     SoundscapePreset(
@@ -27,16 +32,19 @@ abstract class SoundscapePreset with _$SoundscapePreset {
       name: 'Deep Work',
       config: SoundscapeConfig(
         intensity: 0.7,
-        warmth: 0.6,
+        warmth: 0.72,
         complexity: 0.3,
-        noise: 0.7,
-        pad: 0.5,
-        piano: 0.2,
-        binaural: 0.4,
+        noise: 0.42,
+        pad: 0.72,
+        piano: 0.12,
+        binaural: 0.12,
         nature: 0.2,
         beats: 0.40,
         bass: 0.28,
         beatsBpm: 72,
+        gentlePulses: true,
+        wind: 0.22,
+        chimes: 0.08,
       ),
       visualPreset: 'waves_particles',
     ),
@@ -45,16 +53,19 @@ abstract class SoundscapePreset with _$SoundscapePreset {
       name: 'Coding',
       config: SoundscapeConfig(
         intensity: 0.6,
-        warmth: 0.5,
+        warmth: 0.65,
         complexity: 0.6,
-        noise: 0.5,
-        pad: 0.6,
-        piano: 0.3,
-        binaural: 0.3,
+        noise: 0.35,
+        pad: 0.68,
+        piano: 0.18,
+        binaural: 0.10,
         nature: 0.1,
         beats: 0.45,
         bass: 0.32,
         beatsBpm: 84,
+        gentlePulses: true,
+        wind: 0.16,
+        chimes: 0.06,
       ),
       visualPreset: 'geometric_particles',
     ),
@@ -73,6 +84,8 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.20,
         bass: 0.18,
         beatsBpm: 68,
+        water: 0.26,
+        birds: 0.18,
       ),
       visualPreset: 'blobs',
     ),
@@ -91,6 +104,7 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.0,
         bass: 0.0,
         beatsBpm: 72,
+        wind: 0.20,
       ),
       visualPreset: 'waves',
     ),
@@ -109,6 +123,7 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.25,
         bass: 0.22,
         beatsBpm: 76,
+        chimes: 0.20,
       ),
       visualPreset: 'blobs',
     ),
@@ -127,6 +142,8 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.0,
         bass: 0.0,
         beatsBpm: 72,
+        wind: 0.12,
+        water: 0.12,
       ),
       visualPreset: 'starfield',
     ),
@@ -145,6 +162,8 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.0,
         bass: 0.0,
         beatsBpm: 60,
+        wind: 0.16,
+        water: 0.24,
       ),
       visualPreset: 'waves',
     ),
@@ -163,6 +182,8 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.15,
         bass: 0.12,
         beatsBpm: 60,
+        water: 0.18,
+        chimes: 0.24,
       ),
       visualPreset: 'blobs',
     ),
@@ -181,6 +202,8 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.50,
         bass: 0.38,
         beatsBpm: 76,
+        wind: 0.16,
+        chimes: 0.18,
       ),
       visualPreset: 'geometric_particles',
     ),
@@ -199,6 +222,9 @@ abstract class SoundscapePreset with _$SoundscapePreset {
         beats: 0.10,
         bass: 0.10,
         beatsBpm: 64,
+        wind: 0.14,
+        water: 0.28,
+        birds: 0.22,
       ),
       visualPreset: 'waves_particles',
     ),

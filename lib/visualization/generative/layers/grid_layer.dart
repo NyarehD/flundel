@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/layers/visual_layer.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Deformed Grid Layer combining structured geometry with spatial field displacement.
 class GridLayer extends VisualLayer {
-  final double baseSpacing;
 
   const GridLayer({
     this.baseSpacing = 40.0,
   });
+  final double baseSpacing;
 
   @override
   void paint(

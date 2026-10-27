@@ -20,10 +20,10 @@ class AppTheme {
         secondary: secondaryText,
       ),
       fontFamily: 'Roboto',
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: surfaceColor,
         elevation: 0,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        shape: RoundedRectangleBorder(),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(

@@ -1,14 +1,14 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flundel/visualization/generative/engine/noise.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/engine/visual_seed.dart';
 import 'package:flundel/visualization/generative/engine/visual_state.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GenerativeNoise Determinism Tests', () {
     test('same noise seed produces same value', () {
-      final a = GenerativeNoise(42);
-      final b = GenerativeNoise(42);
+      final a = GenerativeNoise();
+      final b = GenerativeNoise();
 
       expect(
         a.eval3D(1.25, 2.5, 3.75),
@@ -21,7 +21,7 @@ void main() {
     });
 
     test('different seeds change noise field', () {
-      final a = GenerativeNoise(42);
+      final a = GenerativeNoise();
       final b = GenerativeNoise(43);
 
       expect(
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('noise fields exhibit spatial continuity', () {
-      final noise = GenerativeNoise(42);
+      final noise = GenerativeNoise();
       final val1 = noise.eval2D(1.0, 1.0);
       final val2 = noise.eval2D(1.01, 1.01);
 

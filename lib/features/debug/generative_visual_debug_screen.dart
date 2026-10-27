@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/engine/visual_seed.dart';
@@ -8,6 +7,7 @@ import 'package:flundel/visualization/generative/profiles/focus_visual_profile.d
 import 'package:flundel/visualization/generative/profiles/relax_visual_profile.dart';
 import 'package:flundel/visualization/generative/profiles/sleep_visual_profile.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Development-only debug control screen for tuning the Generative Visual Engine.
 class GenerativeVisualDebugScreen extends StatefulWidget {
@@ -218,8 +218,8 @@ class _GenerativeVisualDebugScreenState
           ),
           Expanded(
             child: SliderTheme(
-              data: SliderThemeData(
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              data: const SliderThemeData(
+                thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
                 trackHeight: 2,
               ),
               child: Slider(

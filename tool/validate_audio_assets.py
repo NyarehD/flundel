@@ -18,6 +18,9 @@ FILES = [
     "pads/pad_ambient.wav",
     "texture_noise.wav",
     "nature/rain_loop.wav",
+    "nature/wind_loop.wav",
+    "nature/water_loop.wav",
+    "nature/birds_loop.wav",
     "chimes/chime_1.wav",
     "chimes/chime_2.wav",
     "chimes/chime_3.wav",
@@ -56,7 +59,15 @@ def inspect(path: Path) -> dict[str, object]:
         raise ValueError(f"{path}: silent or clipped PCM (rms={rms}, peak={peak})")
     if dc > 0.002:
         raise ValueError(f"{path}: excessive DC offset ({dc:.6f})")
-    is_loop = path.name in {"drone_root.wav", "pad_ambient.wav", "texture_noise.wav", "rain_loop.wav"} or path.parent.name == "chords"
+    is_loop = path.name in {
+        "drone_root.wav",
+        "pad_ambient.wav",
+        "texture_noise.wav",
+        "rain_loop.wav",
+        "wind_loop.wav",
+        "water_loop.wav",
+        "birds_loop.wav",
+    } or path.parent.name == "chords"
     if is_loop and seam_delta > 0.05:
         raise ValueError(f"{path}: loop seam delta too large ({seam_delta:.4f})")
     return {
@@ -88,7 +99,7 @@ def main() -> None:
                 raise ValueError(f"import provenance is stale for {name}: {field}")
     manifest = {
         "provenance": "Generated in this repository by tool/generate_assets.dart. No third-party audio is bundled.",
-        "generator": "Dart synthesis: PadSynth, NoiseEngine, EnvironmentalLayer, SyntheticAudio; 48 kHz stereo PCM; deterministic noise seeds 42 and 88.",
+        "generator": "Dart synthesis: PadSynth, NoiseEngine, EnvironmentalLayer, AmbienceGenerator, SyntheticAudio; 48 kHz stereo PCM; deterministic noise seeds 42, 88, 421, 882, and 1729.",
         "assets": {name: inspect(ASSETS / name) for name in FILES},
         "imports": imports,
     }

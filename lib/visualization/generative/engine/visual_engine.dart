@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flundel/visualization/generative/engine/noise.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/engine/visual_seed.dart';
 import 'package:flundel/visualization/generative/engine/visual_state.dart';
+import 'package:flutter/foundation.dart';
 
 enum GenerativeVisualQuality {
   low,
@@ -15,6 +15,17 @@ enum GenerativeVisualQuality {
 /// Core engine managing multi-timescale clocks, noise evaluation,
 /// parameter smoothing, and quality options.
 class VisualEngine extends ChangeNotifier {
+
+  VisualEngine({
+    GenerativeVisualSeed? seed,
+    VisualParameters initialParameters = VisualParameters.focus,
+    this._quality = GenerativeVisualQuality.medium,
+  })  : _seed = seed ?? const GenerativeVisualSeed(sessionSeed: 42, patternSeed: 101),
+        _currentParameters = initialParameters,
+        _targetParameters = initialParameters,
+        _audioState = const AudioVisualState() {
+    _noise = _seed.createNoise();
+  }
   GenerativeVisualSeed _seed;
   late GenerativeNoise _noise;
   VisualParameters _currentParameters;
@@ -29,17 +40,6 @@ class VisualEngine extends ChangeNotifier {
   double _pulseTime = 0.0;
   double _topologyTime = 0.0;
   double _compositionTime = 0.0;
-
-  VisualEngine({
-    GenerativeVisualSeed? seed,
-    VisualParameters initialParameters = VisualParameters.focus,
-    this._quality = GenerativeVisualQuality.medium,
-  })  : _seed = seed ?? const GenerativeVisualSeed(sessionSeed: 42, patternSeed: 101),
-        _currentParameters = initialParameters,
-        _targetParameters = initialParameters,
-        _audioState = const AudioVisualState() {
-    _noise = _seed.createNoise();
-  }
 
   GenerativeVisualSeed get seed => _seed;
   GenerativeNoise get noise => _noise;

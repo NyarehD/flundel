@@ -5,10 +5,6 @@ import 'package:flundel/audio/procedural/harmony_controller.dart';
 
 /// A serializable, immutable set of loop stems rendered without Flutter APIs.
 class RhythmLoopBank {
-  final Uint8List drumsWav;
-  final Map<ChordType, Uint8List> bassWavs;
-  final int frameCount;
-  final int sampleRate;
 
   const RhythmLoopBank({
     required this.drumsWav,
@@ -16,6 +12,10 @@ class RhythmLoopBank {
     required this.frameCount,
     required this.sampleRate,
   });
+  final Uint8List drumsWav;
+  final Map<ChordType, Uint8List> bassWavs;
+  final int frameCount;
+  final int sampleRate;
 
   Duration get duration => Duration(
     microseconds: (frameCount * Duration.microsecondsPerSecond / sampleRate)
@@ -40,6 +40,7 @@ class RhythmLoopRenderer {
     required int bpm,
     required int seed,
     int sampleRate = 48000,
+    bool gentlePulses = false,
   }) {
     if (bpm < 60 || bpm > 100 || sampleRate != 48000) {
       throw ArgumentError('bpm must be 60..100 and sampleRate must be 48000');
@@ -47,7 +48,9 @@ class RhythmLoopRenderer {
     final frames = (sampleRate * 60 * 16 / bpm).round();
     final random = Random(seed);
     final events = _makeEvents(bpm, frames, sampleRate, random);
-    final drums = _renderDrums(events, frames, sampleRate, seed);
+    final drums = gentlePulses
+        ? _renderPulses(bpm, frames, sampleRate, seed)
+        : _renderDrums(events, frames, sampleRate, seed);
     final bass = <ChordType, Uint8List>{};
     for (final chord in ChordType.values) {
       bass[chord] = _renderBass(
@@ -63,6 +66,25 @@ class RhythmLoopRenderer {
       frameCount: frames,
       sampleRate: sampleRate,
     );
+  }
+
+  /// Rounded, pitched pulses without snare/hat transients. Timing remains on
+  /// the same native four-bar transport as the bass; tails wrap at the seam.
+  static Uint8List _renderPulses(int bpm, int frames, int sr, int seed) {
+    final out = List<double>.filled(frames * 2, 0);
+    final random = Random(seed ^ 0xF0C05);
+    for (var beat = 0; beat < 16; beat++) {
+      final velocity = (beat.isEven ? 0.9 : 0.66) + random.nextDouble() * 0.08;
+      final start = (beat * sr * 60 / bpm).round();
+      _addWrapped(out, frames, sr, start, (t, _) {
+        final attack = 0.5 - 0.5 * cos(pi * min(1.0, t / 0.045));
+        final envelope = attack * exp(-t * 6) * _terminalFade(t, 0.65, 0.12);
+        // Low A pulse with enough upper body for a phone speaker.
+        final phase = 2 * pi * (110 * t + 3 * (1 - exp(-t * 12)) / 12);
+        return (sin(phase) + 0.20 * sin(phase * 2)) * envelope * velocity;
+      }, 0.65);
+    }
+    return _wav(_normalize(out, -26, -9), sr);
   }
 
   static List<_Hit> _makeEvents(
@@ -151,7 +173,10 @@ class RhythmLoopRenderer {
         }, 0.085);
       }
     }
-    return _wav(_normalize(out, -22, -6), sr);
+    return _wav(
+      _normalize(_softClipToPeak(out, -6, thresholdRatio: 0.5), -22, -6),
+      sr,
+    );
   }
 
   static Uint8List _renderBass(
@@ -186,6 +211,35 @@ class RhythmLoopRenderer {
     final start = duration - fadeSeconds;
     if (t <= start) return 1;
     return 0.5 * (1 + cos(pi * ((t - start) / fadeSeconds).clamp(0.0, 1.0)));
+  }
+
+  /// Gently rounds drum transients before RMS calibration so the -22 dBFS
+  /// target can coexist with the -6 dBFS peak ceiling. The signal is first
+  /// scaled to the ceiling, then only its upper crest is saturated; low-level
+  /// kick body, snare tone, and hat detail remain nearly linear.
+  static List<double> _softClipToPeak(
+    List<double> data,
+    double peakDb, {
+    required double thresholdRatio,
+  }) {
+    var peak = 0.0;
+    for (var i = 0; i < data.length; i += 2) {
+      peak = max(peak, data[i].abs());
+    }
+    if (peak == 0) return data;
+
+    final ceiling = pow(10, peakDb / 20).toDouble();
+    final scale = ceiling / peak;
+    final threshold = ceiling * thresholdRatio;
+    for (var i = 0; i < data.length; i += 2) {
+      final value = data[i] * scale;
+      final decay = exp(-2 * value.abs() / threshold);
+      final saturation = (1 - decay) / (1 + decay);
+      final clipped = threshold * (value < 0 ? -saturation : saturation);
+      data[i] = clipped;
+      data[i + 1] = clipped;
+    }
+    return data;
   }
 
   static void _addWrapped(
@@ -264,12 +318,6 @@ class RhythmLoopRenderer {
 }
 
 class _Hit {
-  final int frame;
-  final bool kick;
-  final bool snare;
-  final bool hat;
-  final double velocity;
-  final int beat;
 
   const _Hit({
     required this.frame,
@@ -279,4 +327,10 @@ class _Hit {
     required this.velocity,
     required this.beat,
   });
+  final int frame;
+  final bool kick;
+  final bool snare;
+  final bool hat;
+  final double velocity;
+  final int beat;
 }

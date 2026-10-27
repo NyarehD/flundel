@@ -17,23 +17,34 @@ enum SessionStatus {
 
 @freezed
 @HiveType(typeId: 2)
-abstract class FocusSession with _$FocusSession {
-  // json_serializable applies nested toJson calls through Freezed's factory.
-  // ignore: invalid_annotation_target
-  @JsonSerializable(explicitToJson: true)
-  const factory FocusSession({
-    @HiveField(0) required String id,
-    @HiveField(1) required DateTime startedAt,
-    @HiveField(2) int? durationSeconds,
-    @HiveField(3) required SoundscapePreset preset,
-    @HiveField(4) @Default(12345) int sessionSeed,
-    @HiveField(5) @Default(SessionStatus.active) SessionStatus status,
-    @HiveField(6) @Default(false) bool isPomodoro,
-    @HiveField(7) DateTime? pausedAt,
-    @HiveField(8) @Default(0) int totalPausedSeconds,
-    @HiveField(9) @Default(true) bool completionCueEnabled,
-  }) = _FocusSession;
+@JsonSerializable(explicitToJson: true)
+class FocusSession with _$FocusSession {
+  const FocusSession({
+    @HiveField(0) required this.id,
+    @HiveField(1) required this.startedAt,
+    @HiveField(2) this.durationSeconds,
+    @HiveField(3) required this.preset,
+    @HiveField(4) this.sessionSeed = 12345,
+    @HiveField(5) this.status = SessionStatus.active,
+    @HiveField(6) this.isPomodoro = false,
+    @HiveField(7) this.pausedAt,
+    @HiveField(8) this.totalPausedSeconds = 0,
+    @HiveField(9) this.completionCueEnabled = true,
+  });
+
+  final String id;
+  final DateTime startedAt;
+  final int? durationSeconds;
+  final SoundscapePreset preset;
+  final int sessionSeed;
+  final SessionStatus status;
+  final bool isPomodoro;
+  final DateTime? pausedAt;
+  final int totalPausedSeconds;
+  final bool completionCueEnabled;
 
   factory FocusSession.fromJson(Map<String, dynamic> json) =>
       _$FocusSessionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$FocusSessionToJson(this);
 }

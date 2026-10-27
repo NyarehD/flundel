@@ -1,11 +1,11 @@
-import 'dart:ui' as ui;
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/visualization/painters/soundscape_painter.dart';
 import 'package:flundel/visualization/visualization_engine.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 Future<Uint8List> _rasterize(
   String presetId,
@@ -21,7 +21,7 @@ Future<Uint8List> _rasterize(
   ).paint(canvas, const Size(180, 220));
   final picture = recorder.endRecording();
   final image = await picture.toImage(180, 220);
-  final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+  final byteData = await image.toByteData();
   final bytes = Uint8List.fromList(
     byteData!.buffer.asUint8List(
       byteData.offsetInBytes,
@@ -91,7 +91,7 @@ void main() {
       ).paint(canvas, const Size(180, 220));
       final picture = recorder.endRecording();
       final image = await picture.toImage(180, 220);
-      final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final bytes = await image.toByteData();
       images.add(String.fromCharCodes(bytes!.buffer.asUint8List()));
       image.dispose();
       picture.dispose();
@@ -373,7 +373,7 @@ void main() {
       final picture = recorder.endRecording();
       final image = await picture.toImage(180, 220);
       final bytes = (await image.toByteData(
-        format: ui.ImageByteFormat.rawRgba,
+        
       ))!.buffer.asUint8List();
       expect(
         List.generate(

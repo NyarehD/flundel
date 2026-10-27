@@ -1,13 +1,22 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
 /// Multi-tier filtered noise generator (Pink, Brown, Velvet noise) with resonant biquad filtering and slow LFO breathing.
 class NoiseEngine {
-  final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.15);
-  final SmoothedValue warmth = SmoothedValue(0.5, smoothingDurationSeconds: 0.25);
-  final SmoothedValue cutoffHz = SmoothedValue(1200.0, smoothingDurationSeconds: 0.5);
+  final SmoothedValue volume = SmoothedValue(
+    0.0,
+  );
+  final SmoothedValue warmth = SmoothedValue(
+    0.5,
+    smoothingDurationSeconds: 0.25,
+  );
+  final SmoothedValue cutoffHz = SmoothedValue(
+    1200.0,
+    smoothingDurationSeconds: 0.5,
+  );
 
   bool isMuted = false;
   bool isSolo = false;
@@ -35,7 +44,14 @@ class NoiseEngine {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     // Pink noise state variables (Kellet filter)
     double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
@@ -44,7 +60,10 @@ class NoiseEngine {
 
     // Resonant Biquad Low-Pass Filter state & coefficients
     double x1L = 0, x2L = 0, y1L = 0, y2L = 0;
-    double x1R = 0, x2R = 0, y1R = 0, y2R = 0;
+    double x1R = 0;
+    double x2R = 0;
+    double y1R = 0;
+    double y2R = 0;
 
     final currentCutoff = cutoffHz.value.clamp(200.0, 8000.0);
     const Q = 0.707; // Butterworth response
@@ -97,15 +116,27 @@ class NoiseEngine {
       brownStateR = (brownStateR + (0.02 * whiteR)) / 1.02;
 
       // Blend based on warmth: higher warmth -> brown noise, lower warmth -> pink noise
-      final rawL = (pinkL * (1.0 - (curWarmth * 0.6))) + (brownStateL * (curWarmth * 2.5));
-      final rawR = (pinkL * (1.0 - (curWarmth * 0.6))) + (brownStateR * (curWarmth * 2.5));
+      final rawL =
+          (pinkL * (1.0 - (curWarmth * 0.6))) +
+          (brownStateL * (curWarmth * 2.5));
+      final rawR =
+          (pinkL * (1.0 - (curWarmth * 0.6))) +
+          (brownStateR * (curWarmth * 2.5));
 
       // Biquad low-pass filter calculation
-      final filteredL = nb0 * rawL + nb1 * x1L + nb2 * x2L - na1 * y1L - na2 * y2L;
-      x2L = x1L; x1L = rawL; y2L = y1L; y1L = filteredL;
+      final filteredL =
+          nb0 * rawL + nb1 * x1L + nb2 * x2L - na1 * y1L - na2 * y2L;
+      x2L = x1L;
+      x1L = rawL;
+      y2L = y1L;
+      y1L = filteredL;
 
-      final filteredR = nb0 * rawR + nb1 * x1R + nb2 * x2R - na1 * y1R - na2 * y2R;
-      x2R = x1R; x1R = rawR; y2R = y1R; y1R = filteredR;
+      final filteredR =
+          nb0 * rawR + nb1 * x1R + nb2 * x2R - na1 * y1R - na2 * y2R;
+      x2R = x1R;
+      x1R = rawR;
+      y2R = y1R;
+      y1R = filteredR;
 
       double loopFade = 1.0;
       if (i < fadeSamples) {

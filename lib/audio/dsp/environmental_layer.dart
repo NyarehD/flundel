@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
 /// Environmental nature texture layer (organic rain, wind rumble, stream ripples) with parameter smoothing.
 class EnvironmentalLayer {
-  final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
+  final SmoothedValue volume = SmoothedValue(
+    0.0,
+    smoothingDurationSeconds: 0.2,
+  );
 
   bool isMuted = false;
   bool isSolo = false;
@@ -27,7 +31,14 @@ class EnvironmentalLayer {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final random = Random(88);
     final fadeSamples = (sampleRate * 0.15).toInt();
@@ -49,15 +60,21 @@ class EnvironmentalLayer {
       final impulseRollR = random.nextDouble();
 
       // Droplet density probability threshold (~120 drops/sec per channel)
-      final dropL = impulseRollL < 0.0025 ? ((random.nextDouble() * 2.0) - 1.0) * 1.8 : 0.0;
-      final dropR = impulseRollR < 0.0025 ? ((random.nextDouble() * 2.0) - 1.0) * 1.8 : 0.0;
+      final dropL = impulseRollL < 0.0025
+          ? ((random.nextDouble() * 2.0) - 1.0) * 1.8
+          : 0.0;
+      final dropR = impulseRollR < 0.0025
+          ? ((random.nextDouble() * 2.0) - 1.0) * 1.8
+          : 0.0;
 
       final whiteL = (random.nextDouble() * 2.0) - 1.0;
       final whiteR = (random.nextDouble() * 2.0) - 1.0;
 
       // Bandpass filtering for rain patter (1.5 kHz – 5.0 kHz response)
-      rainDropStateL = (rainDropStateL * 0.88) + ((whiteL * 0.15 + dropL) * 0.12);
-      rainDropStateR = (rainDropStateR * 0.88) + ((whiteR * 0.15 + dropR) * 0.12);
+      rainDropStateL =
+          (rainDropStateL * 0.88) + ((whiteL * 0.15 + dropL) * 0.12);
+      rainDropStateR =
+          (rainDropStateR * 0.88) + ((whiteR * 0.15 + dropR) * 0.12);
 
       // 2. Wind rumble (Low-pass filtered brown noise, 80 Hz – 250 Hz)
       final windLfo = 0.70 + 0.30 * sin(2 * pi * 0.15 * t);
@@ -107,7 +124,14 @@ class EnvironmentalLayer {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final random = Random(124);
     final fadeSamples = (sampleRate * 0.15).toInt();
@@ -161,7 +185,14 @@ class EnvironmentalLayer {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final random = Random(256);
     final fadeSamples = (sampleRate * 0.15).toInt();

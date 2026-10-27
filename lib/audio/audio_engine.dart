@@ -1,15 +1,28 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/audio/audio_engine_impl.dart';
+import 'package:flundel/audio/audio_session_context.dart';
+import 'package:flundel/domain/models/soundscape_config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract interface class AudioEngine {
   Future<void> initialize();
 
-  Future<void> start(SoundscapeConfig config, {int sessionSeed = 42});
+  Future<void> start(
+    SoundscapeConfig config, {
+    int sessionSeed = 42,
+    AudioSessionContext? context,
+    Map<String, dynamic>? checkpoint,
+    bool startPaused = false,
+  });
+
+  Future<void> updateSessionContext(AudioSessionContext context);
+  AudioPlaybackSnapshot get playbackSnapshot;
+  AudioDiagnostics get diagnostics;
+  Future<Map<String, dynamic>> captureCheckpoint();
+  Future<void> dispose();
 
   Future<void> updateConfig(SoundscapeConfig config);
 
@@ -36,8 +49,8 @@ abstract interface class AudioEngine {
   void setReverbMix(double value);
 
   void setExternalPlaybackHandlers({
-    required Future<void> Function() onPause,
-    required Future<void> Function() onResume,
+    Future<void> Function()? onPause,
+    Future<void> Function()? onResume,
   });
 
   Future<void> stop();
@@ -51,6 +64,6 @@ abstract interface class AudioEngine {
 
 final audioEngineProvider = Provider<AudioEngine>((ref) {
   final engine = AudioEngineImpl();
-  ref.onDispose(() => engine.dispose());
+  ref.onDispose(engine.dispose);
   return engine;
 });

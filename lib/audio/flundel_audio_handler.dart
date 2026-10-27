@@ -26,7 +26,6 @@ class FlundelAudioHandler extends BaseAudioHandler {
         },
         playing: playing,
         processingState: AudioProcessingState.ready,
-        updatePosition: Duration.zero,
       ),
     );
   }
@@ -36,8 +35,6 @@ class FlundelAudioHandler extends BaseAudioHandler {
       PlaybackState(
         controls: [],
         systemActions: {},
-        playing: false,
-        processingState: AudioProcessingState.idle,
       ),
     );
   }

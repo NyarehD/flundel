@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flundel/audio/audio_engine.dart';
+import 'package:flundel/audio/audio_session_context.dart';
+import 'package:flundel/domain/models/soundscape_config.dart';
+import 'package:flundel/domain/models/soundscape_preset.dart';
+import 'package:flundel/session/session_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flundel/audio/audio_engine.dart';
-import 'package:flundel/domain/models/soundscape_config.dart';
-import 'package:flundel/session/session_view_model.dart';
 
 class DebugAudioScreen extends ConsumerStatefulWidget {
   const DebugAudioScreen({super.key});
@@ -16,23 +18,27 @@ class DebugAudioScreen extends ConsumerStatefulWidget {
 
 class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
   Timer? _diagnosticsTimer;
+  static final SoundscapeConfig _defaultConfig = SoundscapePreset.builtInPresets
+      .singleWhere((preset) => preset.id == 'deep_work')
+      .config;
+  SoundscapeConfig _sourceConfig = _defaultConfig;
 
   double _masterVolume = 0.9;
-  double _intensity = 0.7;
+  double _intensity = _defaultConfig.intensity;
   // Match the built-in Deep Work preset so a debug capture represents the
   // default listening balance rather than a different hand-tuned mixture.
-  double _noiseVol = 0.7;
-  double _padVol = 0.5;
-  double _pianoVol = 0.2;
-  double _binauralVol = 0.4;
-  double _natureVol = 0.2;
-  double _beatsVol = 0.4;
-  double _bassVol = 0.28;
-  int _beatsBpm = 72;
+  double _noiseVol = _defaultConfig.noise;
+  double _padVol = _defaultConfig.pad;
+  double _pianoVol = _defaultConfig.piano;
+  double _binauralVol = _defaultConfig.binaural;
+  double _natureVol = _defaultConfig.nature;
+  double _beatsVol = _defaultConfig.beats;
+  double _bassVol = _defaultConfig.bass;
+  int _beatsBpm = _defaultConfig.beatsBpm;
 
   double _focusDepth = 0.5;
-  double _warmth = 0.6;
-  double _complexity = 0.3;
+  double _warmth = _defaultConfig.warmth;
+  double _complexity = _defaultConfig.complexity;
   double _cutoffHz = 1200;
   double _reverbSend = 0.3;
   bool _capturingPreview = false;
@@ -51,7 +57,7 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
       final file = File('${dir.path}/mixer-output-preview.wav');
       await file.writeAsBytes(bytes, flush: true);
       if (mounted) setState(() => _previewPath = file.path);
-    } catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Preview capture failed: $error')),
@@ -70,8 +76,8 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
         await engine.stop();
       } else {
         await engine.start(
-          SoundscapeConfig(
-            intensity: 0.7,
+          _sourceConfig.copyWith(
+            intensity: _intensity,
             noise: _noiseVol,
             pad: _padVol,
             piano: _pianoVol,
@@ -83,11 +89,15 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
             warmth: _warmth,
             complexity: _complexity,
           ),
-          sessionSeed: 42,
+          context: AudioSessionContext(
+            presetId:
+                ref.read(sessionViewModelProvider).currentSession?.preset.id ??
+                'deep_work',
+          ),
         );
         await engine.setFocusDepth(_focusDepth);
       }
-    } catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Preview playback failed: $error')),
@@ -107,6 +117,7 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
         ?.preset
         .config;
     if (activeConfig != null) {
+      _sourceConfig = activeConfig;
       _intensity = activeConfig.intensity;
       _noiseVol = activeConfig.noise;
       _padVol = activeConfig.pad;
@@ -134,7 +145,7 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
     final engine = ref.read(audioEngineProvider);
     try {
       await engine.updateConfig(
-        SoundscapeConfig(
+        _sourceConfig.copyWith(
           intensity: _intensity,
           noise: _noiseVol,
           pad: _padVol,
@@ -149,7 +160,7 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
         ),
       );
       await engine.setFocusDepth(_focusDepth);
-    } catch (error) {
+    } on Object catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -263,7 +274,7 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
                 children: [
                   _buildSlider('Focus Depth', _focusDepth, (v) {
                     setState(() => _focusDepth = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildSlider('Master Gain', _masterVolume, (v) {
                     setState(() => _masterVolume = v);
@@ -271,11 +282,11 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
                   }),
                   _buildSlider('Warmth', _warmth, (v) {
                     setState(() => _warmth = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildSlider('Complexity', _complexity, (v) {
                     setState(() => _complexity = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildSlider(
                     'Filter Cutoff (Hz)',
@@ -303,33 +314,33 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
                 children: [
                   _buildLayerRow('Noise', _noiseVol, 'noise', engine, (v) {
                     setState(() => _noiseVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Pad / Synth', _padVol, 'pad', engine, (v) {
                     setState(() => _padVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Piano', _pianoVol, 'piano', engine, (v) {
                     setState(() => _pianoVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Beats', _beatsVol, 'beats', engine, (v) {
                     setState(() => _beatsVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Bass', _bassVol, 'bass', engine, (v) {
                     setState(() => _bassVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Binaural', _binauralVol, 'binaural', engine, (
                     v,
                   ) {
                     setState(() => _binauralVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                   _buildLayerRow('Nature', _natureVol, 'nature', engine, (v) {
                     setState(() => _natureVol = v);
-                    _applyConfigUpdates();
+                    unawaited(_applyConfigUpdates());
                   }),
                 ],
               ),
@@ -342,6 +353,12 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      final activeSessionBpm = ref
+                          .read(sessionViewModelProvider)
+                          .currentSession
+                          ?.preset
+                          .config
+                          .beatsBpm;
                       for (final key in [
                         'noise',
                         'pad',
@@ -362,12 +379,12 @@ class _DebugAudioScreenState extends ConsumerState<DebugAudioScreen> {
                         _pianoVol = 0.2;
                         _beatsVol = 0.4;
                         _bassVol = 0.28;
-                        _beatsBpm = 72;
+                        _beatsBpm = activeSessionBpm ?? 72;
                         _binauralVol = 0.4;
                         _natureVol = 0.2;
                         _focusDepth = 0.5;
                       });
-                      _applyConfigUpdates();
+                      unawaited(_applyConfigUpdates());
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueGrey,

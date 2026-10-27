@@ -1,48 +1,69 @@
-# Audio assets and playback verification
+# Continuous audio system
 
-## Asset workflow
+## Production path
 
-The bundled soundscape is original, deterministic synthesis from this repository; it contains no downloaded recordings or NCS music. `assets/audio/provenance.json` records the generated files, hashes, measured loudness, peak level, DC offset, loop seam, generator description, and any later imports. Regenerate the synthesized layers and validate their manifest with:
+`AudioEngine` remains the app-facing API. `AudioEngineImpl` delegates composition and DSP to a persistent `RenderWorker` isolate, transport ordering to `PlaybackLifecycle`, and native playback to `NativeStreamMixer`. `OfflineRenderer` and the validation tool use the **same** `CompositionPlanner` and `SoundscapeRenderer` as playback. The implementation contains original procedural audio and requires no network, sensor permissions, or external sound library.
+
+The renderer produces 48 kHz stereo float PCM in 4,096-frame blocks (85.33 ms). Oscillator phases, filters, envelopes, random streams, pending events, chord crossfades, and reverb delay lines survive block boundaries. Absolute sample positions schedule events; a 100 Hz composition grid makes decisions independent of block sizes. Harmony, rhythm, melody, ambience, and texture synthesis have separate seeded random state. Muting changes native gain without changing future composition.
+
+The native adapter uses eleven released streaming buffers under one parent SoLoud bus: pads, piano, chimes, noise, nature, wind, water, birds, rhythm, bass, and binaural. Each buffer has a three-second hard limit; the normal preparation target is one second. One native parent pause freezes all stems. The bus uses `48000 / 44100` relative speed because SoLoud 5.2.1 creates bus voices with a 44.1 kHz base rate. This selects the intended 48 kHz child mixer rate. The refill timer never schedules notes.
+
+A 180 ms native fade applies layer levels, mute, solo, and master changes. Synthesis updates reach the next block after the existing approximately one-second queue. Session activity and depth approach their targets over 20 and 15 seconds. Pads crossfade chords over six seconds with nearest-register voice leading. Unplayed melodic notes follow a new chord; sounding voices retain their release tails. Bass follows the same chord and rhythm timeline. Event voices are bounded (eight piano voices, two per other event kind), with twelve native handles during ordinary playback: eleven stems plus the parent.
+
+## Authored arrangements and gain staging
+
+Preset IDs and persisted user levels are unchanged. The built-in config supplies the layer balance; `ArrangementProfile` supplies musical limits:
+
+| Preset | Character | Base chord hold | Base phrase spacing |
+| --- | --- | ---: | ---: |
+| Deep Work | Warm sustained pads, restrained pulses | 42 s | 16 s |
+| Coding | More active pulses and harmonic movement | 32 s | 12 s |
+| Reading | Sparse melodic phrasing | 36 s | 15 s |
+| Quiet Focus | Narrow, minimal movement | 58 s | 38 s |
+| Piano Focus | Three-note piano phrases, wider register | 34 s | 7 s |
+| Night Focus | Lower register, very slow movement | 60 s | 32 s |
+| Ocean Drift | Flowing textures, broad slow movement | 52 s | 34 s |
+| Zen Meditation | Spacious sustained harmony | 56 s | 26 s |
+| Lo-Fi Study | Recognizable kick, snare, hats, and bass | 30 s | 13 s |
+| Forest Stream | Water, wind, birds, and sparse harmony | 48 s | 25 s |
+
+Actual spacing evolves with seeded decisions and session phase. Deep Work and Coding have a fixed 1.15 pad-presence balance. Pad synthesis includes a phase-continuous lower-octave foundation and gentle even/odd harmonics, with fixed soft saturation containing coincident chord peaks. Focus profiles attenuate continuous textures (Deep Work 0.15, Coding 0.20, Quiet/Night Focus 0.12); Ocean Drift and Forest Stream retain full environmental texture. A warmth-dependent low-pass filter suppresses upper-frequency hiss in the noise bed. These source balances preserve stored control values and never compensate for muting or attenuation. Profiles also constrain register, stereo width, modulation, brightness, pulse density, and environmental motion. BPM and rhythm voice are fixed during an active session; changing presets starts a new composition.
+
+Pads and melodic stems have separate diffuse spaces. Bass and binaural carriers remain dry; the binaural left and right carriers never enter the reverb. Source amplitude and `AudioMixPolicy` provide explicit attenuation, followed by a 0.82 parent gain and the user's master gain (default 0.9). The final native limiter has a -6 dB threshold and -1 dB ceiling as protection. There is no normalization or automatic gain compensation after a user lowers a control. New native voices start at zero and fade to their requested levels.
+
+## Lifecycle and recovery
+
+Start, configuration, pause, resume, stop, completion, and recovery are serialized. Session epochs reject renders from a stopped/replaced session; synthesis revisions reject older configuration updates. The session timer and audible musical events use **consumed native frames**, not render-ahead frames or wall-clock time. Wind-down lasts until the true session end; endless sessions stay in sustained deep focus.
+
+A low buffer pauses the parent transport before refilling. An actual underrun or stem skew additionally reconstructs the worker from a consumed-position checkpoint and recreates all native streams together. Time spent buffering does not count toward the focus session. Rendering failures pause playback and notify the session controller.
+
+The worker retains 32 bounded block-start snapshots (2.73 seconds). A checkpoint reconstructs the exact consumed frame from the latest earlier snapshot, including DSP tails. The session controller persists every four consumed seconds (leaving margin for the five-second recovery target), on pause, and on inactive/background transitions. Hive flushes each saved checkpoint and compacts after eight obsolete records. Stored envelopes include the config, seed, checkpoint version, musical/DSP state, and consumed position.
+
+Reopening always prepares audio **paused**. Downtime is not added to progress. Legacy sessions keep their settings and receive reconstructed DSP state; unsupported checkpoint schemas retain their consumed position. A device startup failure preserves the durable session so Play can retry. Engine disposal closes native streams, sources, subscriptions, callbacks, and the isolate. The five-second abrupt-termination target assumes checkpoint writes are succeeding; persistent storage failures cannot provide that guarantee.
+
+## Validation commands
 
 ```sh
-dart run tool/generate_assets.dart
-python3 tool/validate_audio_assets.py --write-manifest
-python3 tool/validate_audio_assets.py
+flutter test --no-pub
+flutter analyze --no-pub
+# Three minutes per preset, bounded-memory WAV writing and JSON metrics:
+dart compile exe tool/validate_streaming_audio.dart -o build/validate_streaming_audio
+build/validate_streaming_audio 180 build/audio-validation
+# Every source and master at maximum, without the native limiter:
+build/validate_streaming_audio 180 build/audio-validation/max-levels --max-levels
+# Actual native mixer capture and lifecycle probe:
+flutter run --no-pub -d <device-id> -t tool/focus_audio_probe.dart \
+  --dart-define=AUDIO_SOAK_SECONDS=1800
 ```
 
-To import audio, first verify that the license permits embedding and redistributing the file in this app. The importer converts with ffmpeg to stereo 48 kHz PCM16, removes DC, targets -24 dBFS RMS subject to a -1 dBFS peak ceiling, and can prepare a circular loop crossfade. It records the source hash, URL, license, attribution, conversion, and measured output in `provenance.json`:
+Native preview capture converts callback PCM directly into one preallocated PCM16 WAV, bounded to 60 seconds (11,520,044 bytes), without retaining a float copy. The native probe captures post-mixer WAVs, checks all ten presets, zero-intensity silence, a forced slow producer, synchronized pause/resume, consumed-position checkpoints, paused restoration, repeated session cleanup, completion, buffer limits, and a 30-minute soak. It writes `report.json` only after success, `progress.json` during the soak, and `failure.json` on failure. `STREAM_PROBE_PASS` identifies its temporary output directory. Process RSS is recorded separately from native audio buffer bytes; process RSS includes Flutter, the VM, and graphics and is not an audio-owned allocation measurement.
 
-```sh
-python3 tool/import_audio_asset.py source.wav nature/new_loop.wav \
-  --license 'CC0-1.0' --source-url 'https://example.org/asset' \
-  --attribution 'Author, if required' --loop-crossfade-ms 300
-python3 tool/validate_audio_assets.py --write-manifest
-python3 tool/validate_audio_assets.py
-```
+Capture uses threshold notifications that drain the available batch. SoLoud 5.2.1 fixed-size PCM notifications can leave their notification latch set when an Android device callback supplies more than one chunk. The application avoids that path without modifying the package cache.
 
-Use `--output-dir /tmp/audio-import-check` to exercise the importer without changing bundled assets. Do not import audio unless the exact app-distribution rights and attribution requirements are clear. The optional [CC0 rain candidate](https://freesound.org/people/Rvgerxini/sounds/527658/) was not downloaded; the app keeps its generated rain layer. NCS tracks are also not bundled because permission for app distribution has not been confirmed. Review the current [NCS Usage Policy](https://ncs.io/usage-policy) and [NCS contact page](https://ncs.io/contact) for uses outside its creator policy before considering a track.
+Tests cover arbitrary block boundaries, exact JSON continuation, independent muted layers, gain/solo behavior, isolated binaural channels, bounded voices, coordinated harmonic transitions, stale synthesis revisions, worker checkpoints, old schema reconstruction, paused restoration, device failure retry, and true-end phases. The long-render validator additionally checks finite/unclipped PCM, mono retention, discontinuities at block boundaries, and rendering cost.
 
-## Playback and preview
+## Assets and acceptance evidence
 
-Playback, soundscape buses, and the debug capture use `flutter_soloud` 5.2.1. `lib/audio/soloud_bus_meter_adapter.dart` isolates the version-pinned native bus-visualization binding required to read actual bus meters; update and recheck this adapter when changing the package version. `OfflineRenderer` is a legacy synthetic fixture renderer. Its output is not evidence of the live engine's routing, effects, limiter, or sound quality.
+`pubspec.yaml` no longer bundles the large audio loops, and the production engine does not load them. Existing generated WAVs, provenance, import/generation tools, and their fixture tests remain in the repository to preserve prior work. They are historical fixtures, not the live renderer. The bus meter adapter and old loop DSP helpers are likewise outside the production playback path.
 
-Piano phrases are deterministic and drawn from the current chord and passing-note vocabulary. Deep Work uses four-note phrases with a 2–4 second first entrance and roughly 8–12 second phrase starts; Piano Focus uses five-note phrases, and Quiet Focus remains sparse. The engine caps piano polyphony at eight source voices.
-
-Lo-fi drums and a chord-following bassline use separate level controls. Rhythm loops are original four-bar PCM stems generated deterministically from the session seed on a worker isolate. Drum and bass stems use the same exact frame count and are scheduled together on SoLoud's absolute mixer clock; hit timing does not depend on Dart timers. Authored BPMs are Deep Work 72, Coding 84, Reading 68, Piano Focus 76, and Quiet/Night Focus 72. Tempo has no user control and is fixed for a session. Bass chord sources share the same groove and are phase-seeked before a scheduled native crossfade, so chord changes retain the drum transport phase. Pause stops active and pending rhythm voices and resumes both layers from the saved loop phase; completion cancels transitions and fades/stops rhythm before its cue. Beats and bass have separate dry buses for independent live level/mute/solo handling.
-
-The rhythm engine's worst case is eighteen source voices (including two overlapping bass voices during a chord transition) plus four mixer-bus voices, or 22 active voices. SoLoud is configured for 24, leaving two voices of headroom. Diagnostics report both bus meters, BPM and transport phase.
-
-For an actual engine preview, open the in-app Debug Audio screen, select **Start preview session**, then **Capture actual mixer preview**. The captured stereo PCM comes from SoLoud's output capture callback and is exported as a WAV under the system temporary directory; the screen shows the file path. Check that the file is non-silent, unclipped, and has the expected 48 kHz stereo format. The diagnostic peak is the measured output peak in dBFS; tonal and texture levels are native bus meters, gated/scaled by the master output level. Select **Stop preview session** when done.
-
-## Native lifecycle checks
-
-On Android and iOS simulators/devices, verify each item with both a short session and a session long enough to background the app:
-
-- Start playback, lock the screen, and confirm audio continues with lock-screen play/pause controls.
-- Pause and resume from the lock screen; confirm both sound and the session timer pause/resume together.
-- Stop and complete a session; confirm media controls become idle and the optional completion cue plays only on automatic completion.
-- Trigger an audio interruption (for example, a phone call or system audio focus change); confirm playback and timer pause together. Confirm automatic resume only when playback was active before a temporary interruption and the user did not manually pause.
-- Disconnect headphones; confirm the app pauses and does not resume unexpectedly when the headset is reconnected.
-- Resume in the app and verify that mute, master level, layer controls, and the completion-cue preference remain effective.
-
-Build success and unit tests do not replace these device lifecycle checks. Record simulator/device, OS version, actions, and observed media/timer behavior when completing them.
+Validation results and remaining acceptance gates are recorded in `docs/audio-validation.md`. Automated metrics do not establish listening quality. Compare before/after recordings at matched loudness on headphones. Physical Android and iOS acceptance must include background/lock-screen playback and controls, interruptions, headphone disconnection, long sessions, startup latency, and audio-owned memory profiling. The target is rendering below half a block duration, startup below two seconds after initialization, and audio-owned memory below 64 MiB. Simulator and host benchmarks are not physical-device performance certification.

@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/layers/visual_layer.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Low-contrast background color field with subtle animated radial depth glow.
 class BackgroundLayer extends VisualLayer {

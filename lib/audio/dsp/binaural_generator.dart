@@ -1,13 +1,23 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flundel/audio/dsp/smoothed_value.dart';
 
 /// Independent stereo generator for binaural focus beats with warm harmonic layering and isochronic modulation.
 class BinauralGenerator {
-  final SmoothedValue volume = SmoothedValue(0.0, smoothingDurationSeconds: 0.2);
-  final SmoothedValue carrierHz = SmoothedValue(180.0, smoothingDurationSeconds: 0.5);
-  final SmoothedValue beatHz = SmoothedValue(10.0, smoothingDurationSeconds: 0.5);
+  final SmoothedValue volume = SmoothedValue(
+    0.0,
+    smoothingDurationSeconds: 0.2,
+  );
+  final SmoothedValue carrierHz = SmoothedValue(
+    180.0,
+    smoothingDurationSeconds: 0.5,
+  );
+  final SmoothedValue beatHz = SmoothedValue(
+    10.0,
+    smoothingDurationSeconds: 0.5,
+  );
 
   bool isMuted = false;
   bool isSolo = false;
@@ -34,7 +44,14 @@ class BinauralGenerator {
     final bytes = Uint8List(44 + dataSize);
     final bd = ByteData.sublistView(bytes);
 
-    _writeWavHeader(bd, bytes, fileSize, dataSize, channels: 2, sampleRate: sampleRate);
+    _writeWavHeader(
+      bd,
+      bytes,
+      fileSize,
+      dataSize,
+      channels: 2,
+      sampleRate: sampleRate,
+    );
 
     final leftFreq = carrierHz.value;
     final rightFreq = carrierHz.value + beatHz.value;

@@ -1,23 +1,23 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/fields/flow_field.dart';
 import 'package:flundel/visualization/generative/fields/wave_field.dart';
 import 'package:flundel/visualization/generative/layers/visual_layer.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Flowing Lines Layer generating smooth procedural Bézier curves moving
 /// through a 2D vector field with smooth birth/death lifecycles.
 class FlowLineLayer extends VisualLayer {
-  final FlowField flowField;
-  final WaveField waveField;
 
   const FlowLineLayer({
     this.flowField = const FlowField(),
     this.waveField = const WaveField(),
   });
+  final FlowField flowField;
+  final WaveField waveField;
 
   @override
   void paint(

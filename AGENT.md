@@ -60,15 +60,22 @@ This document serves as the primary guidance for AI agents and developers workin
   part 'soundscape_config.g.dart';
 
   @freezed
-  abstract class SoundscapeConfig with _$SoundscapeConfig {
-    const factory SoundscapeConfig({
-      required String id,
-      @Default(0.5) double volume,
-      @Default([]) List<String> activeLayers,
-    }) = _SoundscapeConfig;
+  @JsonSerializable()
+  class SoundscapeConfig with _$SoundscapeConfig {
+    const SoundscapeConfig({
+      required this.id,
+      this.volume = 0.5,
+      this.activeLayers = const [],
+    });
+
+    final String id;
+    final double volume;
+    final List<String> activeLayers;
 
     factory SoundscapeConfig.fromJson(Map<String, dynamic> json) =>
         _$SoundscapeConfigFromJson(json);
+
+    Map<String, dynamic> toJson() => _$SoundscapeConfigToJson(this);
   }
   ```
 - After adding or modifying any `@freezed` models, generate the required code using:

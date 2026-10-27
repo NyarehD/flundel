@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flundel/audio/audio_analysis.dart';
 import 'package:flundel/audio/audio_engine.dart';
-import 'package:flundel/domain/models/soundscape_config.dart';
+import 'package:flundel/audio/audio_session_context.dart';
 import 'package:flundel/domain/models/focus_session.dart';
+import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:flundel/domain/models/soundscape_preset.dart';
 import 'package:flundel/session/session_phase.dart';
 import 'package:flundel/session/session_view_model.dart';
 import 'package:flundel/storage/local_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 class FakeLocalStorageRepository implements LocalStorageRepository {
   String _presetId = 'deep_work';
@@ -63,17 +64,42 @@ class FakeAudioEngine implements AudioEngine {
   bool failConfigUpdates = false;
   bool failStart = false;
   bool failResume = false;
+  bool failCheckpoint = false;
+  int resumeCalls = 0;
+  bool? lastStartPaused;
+  AudioSessionContext? lastContext;
+  Map<String, dynamic>? lastCheckpoint;
+  int frames = 0;
   Completer<void>? updateGate;
   int concurrentConfigUpdates = 0;
   int maxConcurrentConfigUpdates = 0;
 
   @override
   Future<void> initialize() async {}
+  @override
+  Future<void> dispose() async {
+    await _analysisController.close();
+    await _stateController.close();
+  }
 
   @override
-  Future<void> start(SoundscapeConfig config, {int sessionSeed = 42}) async {
+  Future<void> start(
+    SoundscapeConfig config, {
+    int sessionSeed = 42,
+    AudioSessionContext? context,
+    Map<String, dynamic>? checkpoint,
+    bool startPaused = false,
+  }) async {
     if (failStart) throw StateError('audio startup failed');
-    _stateController.add(AudioEngineState.playing);
+    lastStartPaused = startPaused;
+    lastContext = context;
+    lastCheckpoint = checkpoint;
+    frames =
+        (checkpoint?['frame'] as int?) ??
+        (context?.elapsed.inMicroseconds ?? 0) * 48000 ~/ 1000000;
+    _stateController.add(
+      startPaused ? AudioEngineState.paused : AudioEngineState.playing,
+    );
   }
 
   @override
@@ -93,12 +119,31 @@ class FakeAudioEngine implements AudioEngine {
 
   @override
   Future<void> setFocusDepth(double value) async {}
+  @override
+  Future<void> updateSessionContext(AudioSessionContext context) async {}
+  @override
+  AudioPlaybackSnapshot get playbackSnapshot =>
+      AudioPlaybackSnapshot(consumedFrames: frames);
+  @override
+  AudioDiagnostics get diagnostics => AudioDiagnostics(
+    playback: playbackSnapshot,
+    underruns: 0,
+    activeVoices: 0,
+    bufferBytes: 0,
+    renderLoad: 0,
+  );
+  @override
+  Future<Map<String, dynamic>> captureCheckpoint() async {
+    if (failCheckpoint) throw StateError('Checkpoint unavailable');
+    return {'frame': frames};
+  }
 
   @override
   Future<void> pause() async {}
 
   @override
   Future<void> resume() async {
+    resumeCalls++;
     if (failResume) throw StateError('audio focus denied');
   }
 
@@ -126,8 +171,8 @@ class FakeAudioEngine implements AudioEngine {
 
   @override
   void setExternalPlaybackHandlers({
-    required Future<void> Function() onPause,
-    required Future<void> Function() onResume,
+    Future<void> Function()? onPause,
+    Future<void> Function()? onResume,
   }) {}
 
   @override
@@ -146,6 +191,7 @@ class FakeAudioEngine implements AudioEngine {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late ProviderContainer container;
   late FakeLocalStorageRepository fakeStorage;
   late FakeAudioEngine fakeAudioEngine;
@@ -165,6 +211,102 @@ void main() {
   tearDown(() {
     container.dispose();
   });
+
+  test(
+    'reopening restores consumed progress paused and ignores downtime',
+    () async {
+      final preset = SoundscapePreset.builtInPresets.first;
+      final saved = FocusSession(
+        id: 'restore',
+        startedAt: DateTime.now().subtract(const Duration(days: 2)),
+        durationSeconds: 1500,
+        preset: preset.copyWith(config: preset.config.copyWith(pad: .19)),
+        sessionSeed: 17,
+      );
+      await fakeStorage.saveActiveSession({
+        ...saved.toJson(),
+        'elapsedFrames': 999 * 48000,
+        'audioCheckpoint': {'version': 1, 'frame': 123 * 48000 + 117},
+      });
+      final restored = container.read(sessionViewModelProvider);
+      expect(restored.isPaused, isTrue);
+      expect(restored.isActive, isTrue);
+      expect(restored.elapsedSeconds, 123);
+      expect(restored.currentSession!.preset.config.pad, .19);
+      await container
+          .read(sessionViewModelProvider.notifier)
+          .setCompletionCueEnabled(false);
+      expect(fakeAudioEngine.lastStartPaused, isTrue);
+      expect(fakeAudioEngine.lastCheckpoint!['frame'], 123 * 48000 + 117);
+      expect(fakeAudioEngine.playbackSnapshot.position.inSeconds, 123);
+      await container.read(sessionViewModelProvider.notifier).resumeSession();
+      expect(container.read(sessionViewModelProvider).isPaused, isFalse);
+    },
+  );
+
+  test(
+    'legacy paused sessions retain settings and reconstruct elapsed audio',
+    () async {
+      final now = DateTime.now();
+      final saved = FocusSession(
+        id: 'legacy',
+        startedAt: now.subtract(const Duration(seconds: 77)),
+        pausedAt: now,
+        totalPausedSeconds: 7,
+        durationSeconds: 1500,
+        preset: SoundscapePreset.builtInPresets[1],
+        sessionSeed: 41,
+      );
+      await fakeStorage.saveActiveSession(saved.toJson());
+      expect(container.read(sessionViewModelProvider).elapsedSeconds, 70);
+      await container
+          .read(sessionViewModelProvider.notifier)
+          .setCompletionCueEnabled(false);
+      expect(fakeAudioEngine.lastStartPaused, isTrue);
+      expect(fakeAudioEngine.lastCheckpoint, isNull);
+      expect(fakeAudioEngine.lastContext!.elapsed.inSeconds, 70);
+    },
+  );
+
+  test(
+    'audio-device restoration failure preserves the saved session for retry',
+    () async {
+      final saved = FocusSession(
+        id: 'retry',
+        startedAt: DateTime.now(),
+        durationSeconds: 1500,
+        preset: SoundscapePreset.builtInPresets.first,
+        sessionSeed: 9,
+      );
+      await fakeStorage.saveActiveSession({
+        ...saved.toJson(),
+        'elapsedFrames': 20 * 48000,
+      });
+      fakeAudioEngine.failStart = true;
+      container.read(sessionViewModelProvider);
+      final vm = container.read(sessionViewModelProvider.notifier);
+      await vm.setCompletionCueEnabled(false);
+      expect(container.read(sessionViewModelProvider).isPaused, isTrue);
+      expect(fakeStorage.getActiveSession(), isNotNull);
+      fakeAudioEngine.failStart = false;
+      await vm.resumeSession();
+      expect(fakeAudioEngine.lastStartPaused, isTrue);
+      expect(container.read(sessionViewModelProvider).isPaused, isFalse);
+    },
+  );
+
+  test(
+    'pause remains paused when checkpoint persistence is unavailable',
+    () async {
+      final vm = container.read(sessionViewModelProvider.notifier);
+      await vm.startSession();
+      fakeAudioEngine.failCheckpoint = true;
+      await vm.pauseSession();
+      expect(container.read(sessionViewModelProvider).isPaused, isTrue);
+      expect(container.read(sessionViewModelProvider).isLoading, isFalse);
+      expect(fakeAudioEngine.resumeCalls, 0);
+    },
+  );
 
   group('SessionViewModel UI State Tests', () {
     test('Initial UI state reflects default settings', () {

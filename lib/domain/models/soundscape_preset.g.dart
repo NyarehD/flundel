@@ -6,15 +6,15 @@ part of 'soundscape_preset.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_SoundscapePreset _$SoundscapePresetFromJson(Map<String, dynamic> json) =>
-    _SoundscapePreset(
+SoundscapePreset _$SoundscapePresetFromJson(Map<String, dynamic> json) =>
+    SoundscapePreset(
       id: json['id'] as String,
       name: json['name'] as String,
       config: SoundscapeConfig.fromJson(json['config'] as Map<String, dynamic>),
       visualPreset: json['visualPreset'] as String? ?? 'particles_waves',
     );
 
-Map<String, dynamic> _$SoundscapePresetToJson(_SoundscapePreset instance) =>
+Map<String, dynamic> _$SoundscapePresetToJson(SoundscapePreset instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,

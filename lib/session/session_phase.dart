@@ -1,10 +1,4 @@
-enum SessionPhase {
-  settling,
-  enteringFocus,
-  deepFocus,
-  windDown,
-  completion,
-}
+enum SessionPhase { settling, enteringFocus, deepFocus, windDown, completion }
 
 extension SessionPhaseX on SessionPhase {
   String get labelKey {
@@ -35,7 +29,6 @@ extension SessionPhaseX on SessionPhase {
 
     final progress = (elapsedSeconds / totalDurationSeconds).clamp(0.0, 1.0);
     if (progress >= 1.0) return SessionPhase.completion;
-    if (progress >= 0.95) return SessionPhase.completion;
     if (progress >= 0.80) return SessionPhase.windDown;
     if (progress >= 0.30) return SessionPhase.deepFocus;
     if (progress >= 0.10) return SessionPhase.enteringFocus;

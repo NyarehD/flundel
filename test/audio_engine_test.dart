@@ -1,17 +1,16 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flundel/audio/audio_mix_policy.dart';
 import 'package:flundel/audio/dsp/audio_bus.dart';
 import 'package:flundel/audio/dsp/binaural_generator.dart';
 import 'package:flundel/audio/dsp/environmental_layer.dart';
 import 'package:flundel/audio/dsp/noise_engine.dart';
 import 'package:flundel/audio/dsp/pad_synth.dart';
 import 'package:flundel/audio/dsp/smoothed_value.dart';
-import 'package:flundel/audio/audio_mix_policy.dart';
 import 'package:flundel/audio/procedural/harmony_controller.dart';
-import 'package:flundel/audio/procedural/piano_scheduler.dart';
 import 'package:flundel/audio/procedural/piano_phrase_scheduler.dart';
+import 'package:flundel/audio/procedural/piano_scheduler.dart';
 import 'package:flundel/audio/procedural/procedural_controller.dart';
 import 'package:flundel/audio/procedural/variation_budget.dart';
 import 'package:flundel/audio/rhythm_transport_clock.dart';
@@ -19,6 +18,7 @@ import 'package:flundel/audio/synthetic_audio.dart';
 import 'package:flundel/audio/tools/offline_renderer.dart';
 import 'package:flundel/domain/models/soundscape_config.dart';
 import 'package:flundel/domain/models/soundscape_preset.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
@@ -34,6 +34,41 @@ void main() {
       expect(AudioMixPolicy.natureLevel(config), lessThan(padGain));
     },
   );
+
+  test('new profile ambience stays subtle and chimes remain sparse', () {
+    final random = Random(42);
+    for (final preset in SoundscapePreset.builtInPresets) {
+      final config = preset.config;
+      expect(
+        AudioMixPolicy.windLevel(config),
+        lessThan(0.2),
+        reason: preset.id,
+      );
+      expect(
+        AudioMixPolicy.waterLevel(config),
+        lessThan(0.2),
+        reason: preset.id,
+      );
+      expect(
+        AudioMixPolicy.birdsLevel(config),
+        lessThan(0.2),
+        reason: preset.id,
+      );
+      expect(
+        AudioMixPolicy.chimeLevel(config),
+        lessThan(0.2),
+        reason: preset.id,
+      );
+
+      if (config.chimes > 0) {
+        final delay = AudioMixPolicy.nextChimeDelay(
+          random: random,
+          config: config,
+        );
+        expect(delay.inSeconds, inInclusiveRange(19, 33));
+      }
+    }
+  });
 
   test('first piano note is scheduled within the first four seconds', () {
     for (var seed = 0; seed < 100; seed++) {
@@ -238,7 +273,6 @@ void main() {
       final wavBytes = pad.generatePadWavBytes(
         baseFrequencies: [220.0, 261.63, 329.63, 392.00],
         durationSeconds: 1.0,
-        sampleRate: 48000,
       );
 
       expect(
@@ -257,7 +291,6 @@ void main() {
 
       final wavBytes = noise.generateWavBytes(
         durationSeconds: 1.0,
-        sampleRate: 48000,
       );
       expect(wavBytes.length, equals(44 + 48000 * 4));
     });
@@ -272,7 +305,6 @@ void main() {
 
       final wavBytes = binaural.generateBinauralWavBytes(
         durationSeconds: 1.0,
-        sampleRate: 48000,
       );
       expect(wavBytes.length, equals(44 + 48000 * 4));
     });
@@ -285,7 +317,6 @@ void main() {
 
         final wavBytes = env.generateRainWavBytes(
           durationSeconds: 1.0,
-          sampleRate: 48000,
         );
         expect(wavBytes.length, equals(44 + 48000 * 4));
       },
@@ -293,9 +324,7 @@ void main() {
 
     test('SyntheticAudio generates physical modeling chime WAV bytes', () {
       final chimeBytes = SyntheticAudio.createTranquilChimeWavBytes(
-        freqHz: 523.25,
         durationSeconds: 1.5,
-        sampleRate: 48000,
       );
 
       expect(chimeBytes.length, equals(44 + (48000 * 1.5).toInt() * 4));
@@ -307,13 +336,11 @@ void main() {
         final piano = SyntheticAudio.createTranquilChimeWavBytes(
           freqHz: 659.25,
           durationSeconds: 1,
-          sampleRate: 48000,
           softPiano: true,
         );
         final chime = SyntheticAudio.createTranquilChimeWavBytes(
           freqHz: 659.25,
           durationSeconds: 1,
-          sampleRate: 48000,
         );
         expect(piano.length, 44 + 48000 * 4);
         expect(
@@ -357,7 +384,7 @@ void main() {
     );
 
     test('VariationBudget restricts simultaneous macro transitions', () {
-      final budget = VariationBudget(maxSimultaneousTransitions: 2);
+      final budget = VariationBudget();
 
       expect(budget.requestTransition('t1'), isTrue);
       expect(budget.requestTransition('t2'), isTrue);

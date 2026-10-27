@@ -81,7 +81,13 @@ class SyntheticAudio {
       sampleRate: sampleRate,
     );
 
-    double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    double b0 = 0;
+    double b1 = 0;
+    double b2 = 0;
+    double b3 = 0;
+    double b4 = 0;
+    double b5 = 0;
+    double b6 = 0;
     final random = Random(42);
     final fadeSamples = (sampleRate * 0.15).toInt();
     int offset = 44;

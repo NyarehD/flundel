@@ -1,12 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flundel/domain/models/soundscape_preset.dart';
 import 'package:flundel/session/session_phase.dart';
 import 'package:flundel/session/session_state.dart';
 import 'package:flundel/session/session_view_model.dart';
 import 'package:flundel/visualization/visualization_engine.dart';
-import 'package:flundel/domain/models/soundscape_preset.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
@@ -435,7 +435,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
               foregroundColor: Colors.white,
               side: BorderSide(color: Colors.white.withValues(alpha: 0.42)),
               shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
+                
               ),
             ),
             child: sessionState.isLoading
@@ -468,10 +468,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 }
 
 class _ControlSlider extends StatelessWidget {
-  final String label;
-  final double value;
-  final ValueChanged<double>? onChanged;
-  final ValueChanged<double>? onChangeEnd;
 
   const _ControlSlider({
     required this.label,
@@ -479,6 +475,10 @@ class _ControlSlider extends StatelessWidget {
     required this.onChanged,
     required this.onChangeEnd,
   });
+  final String label;
+  final double value;
+  final ValueChanged<double>? onChanged;
+  final ValueChanged<double>? onChangeEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -503,7 +503,7 @@ class _ControlSlider extends StatelessWidget {
             '$label, ${(current * 100).round()} percent',
       ),
     );
-    final labelStyle = TextStyle(
+    const labelStyle = TextStyle(
       color: Colors.white70,
       fontSize: 11,
       letterSpacing: 0.3,

@@ -1,15 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/layers/visual_layer.dart';
+import 'package:flutter/material.dart';
 
 /// Palette defining background, primary, secondary, highlight, and accent colors.
 class ColorPalette {
-  final Color background;
-  final Color primary;
-  final Color secondary;
-  final Color highlight;
-  final Color accent;
 
   const ColorPalette({
     required this.background,
@@ -18,6 +13,11 @@ class ColorPalette {
     required this.highlight,
     required this.accent,
   });
+  final Color background;
+  final Color primary;
+  final Color secondary;
+  final Color highlight;
+  final Color accent;
 
   static const focus = ColorPalette(
     background: Color(0xFF04060A),

@@ -1,14 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Multi-layer composite painter executing visual layers in depth order.
 class GenerativeVisualPainter extends CustomPainter {
-  final VisualProfile profile;
-  final VisualEngine engine;
-  final VisualParameters params;
-  final ColorPalette palette;
 
   GenerativeVisualPainter({
     required this.profile,
@@ -17,6 +13,10 @@ class GenerativeVisualPainter extends CustomPainter {
     required this.palette,
     required Listenable repaint,
   }) : super(repaint: repaint);
+  final VisualProfile profile;
+  final VisualEngine engine;
+  final VisualParameters params;
+  final ColorPalette palette;
 
   @override
   void paint(Canvas canvas, Size size) {

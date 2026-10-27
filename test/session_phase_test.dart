@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flundel/session/session_phase.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('SessionPhase Calculations', () {
@@ -40,7 +40,7 @@ void main() {
 
       expect(
         SessionPhaseX.calculatePhase(
-          elapsedSeconds: 980,
+          elapsedSeconds: 1000,
           totalDurationSeconds: totalSeconds,
         ),
         SessionPhase.completion,

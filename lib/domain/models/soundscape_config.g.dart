@@ -6,8 +6,8 @@ part of 'soundscape_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_SoundscapeConfig _$SoundscapeConfigFromJson(Map<String, dynamic> json) =>
-    _SoundscapeConfig(
+SoundscapeConfig _$SoundscapeConfigFromJson(Map<String, dynamic> json) =>
+    SoundscapeConfig(
       intensity: (json['intensity'] as num?)?.toDouble() ?? 0.5,
       warmth: (json['warmth'] as num?)?.toDouble() ?? 0.5,
       complexity: (json['complexity'] as num?)?.toDouble() ?? 0.5,
@@ -19,9 +19,14 @@ _SoundscapeConfig _$SoundscapeConfigFromJson(Map<String, dynamic> json) =>
       beats: (json['beats'] as num?)?.toDouble() ?? 0.0,
       bass: (json['bass'] as num?)?.toDouble() ?? 0.0,
       beatsBpm: (json['beatsBpm'] as num?)?.toInt() ?? 72,
+      wind: (json['wind'] as num?)?.toDouble() ?? 0.0,
+      water: (json['water'] as num?)?.toDouble() ?? 0.0,
+      birds: (json['birds'] as num?)?.toDouble() ?? 0.0,
+      chimes: (json['chimes'] as num?)?.toDouble() ?? 0.0,
+      gentlePulses: json['gentlePulses'] as bool? ?? false,
     );
 
-Map<String, dynamic> _$SoundscapeConfigToJson(_SoundscapeConfig instance) =>
+Map<String, dynamic> _$SoundscapeConfigToJson(SoundscapeConfig instance) =>
     <String, dynamic>{
       'intensity': instance.intensity,
       'warmth': instance.warmth,
@@ -34,4 +39,9 @@ Map<String, dynamic> _$SoundscapeConfigToJson(_SoundscapeConfig instance) =>
       'beats': instance.beats,
       'bass': instance.bass,
       'beatsBpm': instance.beatsBpm,
+      'wind': instance.wind,
+      'water': instance.water,
+      'birds': instance.birds,
+      'chimes': instance.chimes,
+      'gentlePulses': instance.gentlePulses,
     };

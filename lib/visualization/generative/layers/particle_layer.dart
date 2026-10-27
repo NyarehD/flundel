@@ -1,18 +1,18 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
 import 'package:flundel/visualization/generative/engine/visual_engine.dart';
 import 'package:flundel/visualization/generative/engine/visual_parameters.dart';
 import 'package:flundel/visualization/generative/layers/visual_layer.dart';
 import 'package:flundel/visualization/generative/profiles/visual_profile.dart';
+import 'package:flutter/material.dart';
 
 /// Sparse particle layer with noise-driven slow drift and rare distance connections.
 class ParticleLayer extends VisualLayer {
-  final int maxParticles;
 
   const ParticleLayer({
     this.maxParticles = 60,
   });
+  final int maxParticles;
 
   @override
   void paint(

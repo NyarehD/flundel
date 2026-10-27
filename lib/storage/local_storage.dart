@@ -31,18 +31,24 @@ class HiveLocalStorageRepository implements LocalStorageRepository {
   static const String _keyCompletionCueEnabled = 'completion_cue_enabled';
   static const String _keyActiveSession = 'active_session_json';
 
-  Box get _settingsBox => Hive.box(_settingsBoxName);
-  Box get _sessionBox => Hive.box(_sessionBoxName);
+  Box<dynamic> get _settingsBox => Hive.box<dynamic>(_settingsBoxName);
+  Box<dynamic> get _sessionBox => Hive.box<dynamic>(_sessionBoxName);
 
   static Future<void> init() async {
     await Hive.initFlutter();
-    await Hive.openBox(_settingsBoxName);
-    await Hive.openBox(_sessionBoxName);
+    await Hive.openBox<dynamic>(_settingsBoxName);
+    await Hive.openBox<dynamic>(
+      _sessionBoxName,
+      // DSP checkpoints are larger than settings. Compact after eight replaced
+      // records instead of allowing dozens of obsolete delay-line snapshots.
+      compactionStrategy: (entries, deletedEntries) => deletedEntries >= 8,
+    );
   }
 
   @override
   String getLastPresetId() {
-    return _settingsBox.get(_keyLastPresetId, defaultValue: 'deep_work');
+    return _settingsBox.get(_keyLastPresetId, defaultValue: 'deep_work')
+        as String;
   }
 
   @override
@@ -82,6 +88,7 @@ class HiveLocalStorageRepository implements LocalStorageRepository {
   @override
   Future<void> saveActiveSession(Map<String, dynamic> sessionJson) async {
     await _sessionBox.put(_keyActiveSession, jsonEncode(sessionJson));
+    await _sessionBox.flush();
   }
 
   @override
@@ -90,7 +97,7 @@ class HiveLocalStorageRepository implements LocalStorageRepository {
     if (jsonStr == null || jsonStr.isEmpty) return null;
     try {
       return jsonDecode(jsonStr) as Map<String, dynamic>;
-    } catch (_) {
+    } on Object {
       return null;
     }
   }

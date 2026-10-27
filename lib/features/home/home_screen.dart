@@ -1,10 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flundel/domain/models/soundscape_preset.dart';
 import 'package:flundel/session/session_view_model.dart';
 import 'package:flundel/visualization/visualization_engine.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -44,14 +44,13 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         width: 22,
                         height: 22,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white70, width: 1),
+                          border: Border.all(color: Colors.white70),
                         ),
                         child: Center(
                           child: Container(
@@ -309,7 +308,7 @@ class HomeScreen extends ConsumerWidget {
                         backgroundColor: Colors.white,
                         disabledBackgroundColor: Colors.white38,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
+                          
                         ),
                         side: BorderSide.none,
                       ),
@@ -344,9 +343,9 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _SectionLabel extends StatelessWidget {
-  final String label;
 
   const _SectionLabel(this.label);
+  final String label;
 
   @override
   Widget build(BuildContext context) => Text(
@@ -361,15 +360,15 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _DurationOption extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
 
   const _DurationOption({
     required this.label,
     required this.selected,
     required this.onTap,
   });
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Semantics(

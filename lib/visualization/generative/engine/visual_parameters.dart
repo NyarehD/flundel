@@ -4,15 +4,6 @@ import 'dart:ui';
 ///
 /// All values are normalized between 0.0 and 1.0 where applicable.
 class VisualParameters {
-  final double energy;
-  final double density;
-  final double complexity;
-  final double flow;
-  final double pulse;
-  final double turbulence;
-  final double brightness;
-  final double spatialScale;
-  final double speed;
 
   const VisualParameters({
     this.energy = 0.5,
@@ -25,23 +16,29 @@ class VisualParameters {
     this.spatialScale = 0.5,
     this.speed = 0.5,
   });
+  final double energy;
+  final double density;
+  final double complexity;
+  final double flow;
+  final double pulse;
+  final double turbulence;
+  final double brightness;
+  final double spatialScale;
+  final double speed;
 
   static const VisualParameters focus = VisualParameters(
     energy: 0.45,
     density: 0.55,
     complexity: 0.4,
     flow: 0.6,
-    pulse: 0.2,
     turbulence: 0.15,
     brightness: 0.75,
-    spatialScale: 0.5,
     speed: 0.45,
   );
 
   static const VisualParameters deepFocus = VisualParameters(
     energy: 0.35,
     density: 0.65,
-    complexity: 0.5,
     flow: 0.4,
     pulse: 0.15,
     turbulence: 0.08,
@@ -56,7 +53,6 @@ class VisualParameters {
     complexity: 0.3,
     flow: 0.8,
     pulse: 0.3,
-    turbulence: 0.2,
     brightness: 0.6,
     spatialScale: 0.7,
     speed: 0.25,
